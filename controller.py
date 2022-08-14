@@ -76,6 +76,8 @@ class GameController(BaseController):
                 if self.userService.isLastMessage(event.source.user_id, data.messageId):
                     self.gameService.leaveGame(event.source.user_id)
                     self.recordAndReply(event, ViewFactory.leavedGame())
+            elif data.action == PostbackAction.UserInfo:
+                pass
             return
 
         self.recordAndReply(

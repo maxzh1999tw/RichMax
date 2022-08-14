@@ -19,3 +19,4 @@ class PostbackAction:
     CreateGame = "CreateGame"
     LeaveConfirm = "LeaveConfirm"
     Leave = "Leave"
+    UserInfo = "UserInfo"

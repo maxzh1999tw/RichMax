@@ -1,6 +1,6 @@
 import json
 import uuid
-from linebot.models import FlexSendMessage, TextSendMessage
+from linebot.models import *
 
 from postback import PostbackData, PostbackAction
 
@@ -124,7 +124,7 @@ class ViewFactory:
             "@balance", "{:,}".format(argument.balance))
         return json.loads(template, strict=False)
 
-    def textWithConsole(argument: ConsoleArgument, text=None):
+    def textWithConsole(argument: ConsoleArgument, *bubbles: BubbleContainer, text=None):
         template = """{
             "type": "carousel",
             "contents": [
@@ -210,6 +210,17 @@ class ViewFactory:
                                 "contents": [
                                     {
                                         "type": "image",
+                                        "url": "https://cdn-icons-png.flaticon.com/512/1946/1946429.png",
+                                        "size": "25px",
+                                        "align": "start",
+                                        "action": {
+                                            "type": "postback",
+                                            "label": "action",
+                                            "data": "@UserInfo"
+                                        }
+                                    },
+                                    {
+                                        "type": "image",
                                         "url": "https://cdn-icons-png.flaticon.com/512/402/402718.png",
                                         "size": "25px",
                                         "align": "end",
@@ -221,7 +232,10 @@ class ViewFactory:
                                     }
                                 ],
                                 "alignItems": "flex-end",
-                                "margin": "xl"
+                                "margin": "xl",
+                                "paddingStart": "md",
+                                "paddingEnd": "md",
+                                "paddingBottom": "xs"
                             }
                         ],
                         "spacing": "md"
@@ -242,8 +256,12 @@ class ViewFactory:
             "@Destiny", PostbackData("Destiny", id).toFormatedJSON())
         template = template.replace(
             "@LeaveConfirm", PostbackData(PostbackAction.LeaveConfirm, id).toFormatedJSON())
+        template = template.replace(
+            "@UserInfo", PostbackData(PostbackAction.UserInfo, id).toFormatedJSON())
         message = json.loads(template, strict=False)
         message["contents"][0]["header"] = ViewFactory._getGameHeader(argument)
+        for bubble in bubbles:
+            message["contents"].append(bubble)
         alt_text = text
         if text != None:
             template = message["contents"][0]["body"]["contents"][0]["text"] = text
