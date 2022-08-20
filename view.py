@@ -61,10 +61,10 @@ class ViewFactory:
         return View("", TextSendMessage(text="您已經退出遊戲"))
 
     def gameCreated(argument: ConsoleArgument):
-        return ViewFactory.textWithConsole(argument, text=f"您建立了新遊戲\n房號為: {argument.gameId}\n快邀請朋友加入吧~")
+        return ViewFactory.Console(argument, text=f"您建立了新遊戲\n房號為: {argument.gameId}\n快邀請朋友加入吧~")
 
     def joinGameSuccess(argument: ConsoleArgument):
-        return ViewFactory.textWithConsole(argument, text=f"您加入了遊戲\n快邀請朋友加入吧~")
+        return ViewFactory.Console(argument, text=f"您加入了遊戲\n快邀請朋友加入吧~")
 
     def leaveConfirm(argument: ConsoleArgument):
         template = """{
@@ -102,6 +102,29 @@ class ViewFactory:
         message["header"] = ViewFactory._getGameHeader(argument)
         return View(id, FlexSendMessage(alt_text="您確定要退出嗎?", contents=message))
 
+    def buttonExpired():
+        return View("", TextSendMessage(text="阿噢，這顆按鈕已經過期了，請重新呼叫選單~"))
+
+    def askEarnAmount():
+        return View("",  TextSendMessage(
+            text="您要領取多少錢", 
+            quick_reply=QuickReply([
+                QuickReplyButton(action=MessageAction(label="2000", text="2000")), 
+            ])))
+
+    def askPayAmount():
+        return View("", TextSendMessage(
+            text="您要繳多少錢", 
+            quick_reply=QuickReply([
+                QuickReplyButton(action=MessageAction(label="2000", text="2000")), 
+            ])))
+
+    def inputError():
+        return View("", TextSendMessage(text="輸入錯誤，請重新輸入"))
+
+    def OperateSuccess(argument: ConsoleArgument, text: str):
+        return ViewFactory.Console(argument, text=text)
+
     def _getGameHeader(argument: ConsoleArgument):
         template = """{
             "type": "box",
@@ -124,7 +147,7 @@ class ViewFactory:
             "@balance", "{:,}".format(argument.balance))
         return json.loads(template, strict=False)
 
-    def textWithConsole(argument: ConsoleArgument, *bubbles: BubbleContainer, text=None):
+    def Console(argument: ConsoleArgument, *bubbles: BubbleContainer, text=None, id=""):
         template = """{
             "type": "carousel",
             "contents": [
@@ -243,17 +266,16 @@ class ViewFactory:
                 }
             ]
         }"""
-        id = str(uuid.uuid4())
         template = template.replace(
-            "@Earn", PostbackData("Earn", id).toFormatedJSON())
+            "@Earn", PostbackData(PostbackAction.Earn, id).toFormatedJSON())
         template = template.replace(
-            "@Pay", PostbackData("Pay", id).toFormatedJSON())
+            "@Pay", PostbackData(PostbackAction.Pay, id).toFormatedJSON())
         template = template.replace(
-            "@Transfer", PostbackData("Transfer", id).toFormatedJSON())
+            "@Transfer", PostbackData(PostbackAction.Transfer, id).toFormatedJSON())
         template = template.replace(
-            "@Chance", PostbackData("Chance", id).toFormatedJSON())
+            "@Chance", PostbackData(PostbackAction.Chance, id).toFormatedJSON())
         template = template.replace(
-            "@Destiny", PostbackData("Destiny", id).toFormatedJSON())
+            "@Destiny", PostbackData(PostbackAction.Destiny, id).toFormatedJSON())
         template = template.replace(
             "@LeaveConfirm", PostbackData(PostbackAction.LeaveConfirm, id).toFormatedJSON())
         template = template.replace(

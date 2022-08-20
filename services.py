@@ -5,14 +5,14 @@ from google.cloud.firestore import Client
 
 
 class GameService:
-    initBalace = 150000
 
     def __init__(self, db: Client):
-        self.db = db
-        self.collection = self.db.collection("Game")
+        self._db = db
+        self._collection = self._db.collection("Game")
 
     def getUserGameId(self, userId: str):
-        docs = self.collection.where("Members", "array_contains", userId).get()
+        docs = self._collection.where(
+            "Members", "array_contains", userId).get()
         for doc in docs:
             if datetime.now() - doc.get("UpdateTime").replace(tzinfo=None) > timedelta(hours=10):
                 doc.reference.delete()
@@ -23,12 +23,13 @@ class GameService:
     def createGame(self, *memberIds: str):
         while True:
             gameId = f"{random.randint(0, 9999):04}"
-            gameDoc = self.collection.document(gameId)
+            gameDoc = self._collection.document(gameId)
             if not gameDoc.get().exists:
                 break
         gameDoc.create({
             "UpdateTime": datetime.now(),
             "Members": memberIds,
+            "Records": [],
         })
         return gameId
 
@@ -41,7 +42,7 @@ class GameService:
         return False
 
     def joinGame(self, gameId: str, userId: str):
-        doc_snap = self.collection.document(gameId)
+        doc_snap = self._collection.document(gameId)
         doc = doc_snap.get()
         if not doc.exists:
             return False
@@ -52,7 +53,8 @@ class GameService:
         return True
 
     def leaveGame(self, userId: str):
-        docs = self.collection.where("Members", "array_contains", userId).get()
+        docs = self._collection.where(
+            "Members", "array_contains", userId).get()
         for doc in docs:
             if len(doc.get("Members")) == 1:
                 doc.reference.delete()
@@ -61,30 +63,53 @@ class GameService:
                     "Members": firestore.ArrayRemove([userId])
                 })
 
+    def logGameRecord(self, gameId: str, record: str):
+        self._collection.document(gameId).update({
+            "Records": firestore.ArrayUnion(record)
+        })
+
 
 class UserService:
+    _initBalance = 15000
+
     def __init__(self, db: Client):
-        self.db = db
-        self.collection = self.db.collection("User")
+        self._db = db
+        self._collection = self._db.collection("User")
 
     def setLastMessageId(self, userId: str, messageId: str):
-        doc = self.collection.document(userId)
-        if not doc.get().exists:
-            doc.create({
-                "LastMessageId": messageId
-            })
-        else:
-            doc.update({
-                "LastMessageId": messageId
-            })
+        self._collection.document(userId).update({
+            "LastMessageId": messageId
+        })
 
     def isLastMessage(self, userId: str, messageId: str):
-        doc = self.collection.document(userId)
+        doc = self._collection.document(userId)
         if not doc.get().exists:
             return False
         return messageId == doc.get().get("LastMessageId")
 
     def delete(self, userId):
-        doc = self.collection.document(userId)
+        doc = self._collection.document(userId)
         if doc.get().exists:
             doc.delete()
+
+    def initGameData(self, userId: str):
+        self._collection.document(userId).update({
+            "Balance": UserService._initBalance,
+            "Context": None,
+        })
+
+    def getBalance(self, userId):
+        return self._collection.document(userId).get().get("Balance")
+
+    def getContext(self, userId: str):
+        return self._collection.document(userId).get().get("Context")
+
+    def setContext(self, userId: str, context):
+        self._collection.document(userId).update({
+            "Context": context
+        })
+
+    def addBalance(self, userId: str, amount: int):
+        self._collection.document(userId).update({
+            "Balance": firestore.Increment(amount)
+        })

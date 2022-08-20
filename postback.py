@@ -20,3 +20,8 @@ class PostbackAction:
     LeaveConfirm = "LeaveConfirm"
     Leave = "Leave"
     UserInfo = "UserInfo"
+    Earn = "Earn"
+    Pay = "Pay"
+    Transfer = "Transfer"
+    Chance = "Chance"
+    Destiny = "Destiny"

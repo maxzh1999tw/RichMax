@@ -1,3 +1,4 @@
+from argparse import ArgumentError
 from linebot import LineBotApi
 from linebot.models import *
 from google.cloud.firestore import Client
@@ -10,12 +11,14 @@ from view import ConsoleArgument, View, ViewFactory
 class BaseController:
     def __init__(self, lineBotApi: LineBotApi, db: Client, gameService=None, userService=None):
         self.lineBotApi = lineBotApi
-        self.gameService = GameService(db) if gameService == None else gameService
-        self.userService = UserService(db) if userService == None else userService
+        self.gameService = GameService(
+            db) if gameService == None else gameService
+        self.userService = UserService(
+            db) if userService == None else userService
 
     def recordAndReply(self, event, view: View):
-        self.userService.setLastMessageId(event.source.user_id, view.messageId)
         self.lineBotApi.reply_message(event.reply_token, view.message)
+        self.userService.setLastMessageId(event.source.user_id, view.messageId)
 
 
 class FollowController(BaseController):
@@ -35,25 +38,28 @@ class DefaultController(BaseController):
         super().__init__(lineBotApi, db, gameService, userService)
 
     def handleEvent(self, event):
+        userId = event.source.user_id
         if isinstance(event, PostbackEvent):
             data = PostbackData.parse(event.postback.data)
             if data.action == PostbackAction.CreateGame:
-                gameId = self.gameService.createGame(event.source.user_id)
+                gameId = self.gameService.createGame(userId)
+                self.userService.initGameData(userId)
                 self.recordAndReply(event, ViewFactory.gameCreated(ConsoleArgument(
                     gameId,
                     self.lineBotApi.get_profile(
-                        event.source.user_id).display_name,
-                    GameService.initBalace)))
+                        userId).display_name,
+                    15000)))
             return
 
         if isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
             if GameService.isGameId(event.message.text):
-                if self.gameService.joinGame(event.message.text, event.source.user_id):
+                if self.gameService.joinGame(event.message.text, userId):
+                    self.userService.initGameData()
                     self.recordAndReply(event, ViewFactory.joinGameSuccess(ConsoleArgument(
                         event.message.text,
                         self.lineBotApi.get_profile(
-                            event.source.user_id).display_name,
-                        GameService.initBalace)))
+                            userId).display_name,
+                        15000)))
                 else:
                     self.recordAndReply(event, ViewFactory.joinGameFail())
 
@@ -64,21 +70,75 @@ class GameController(BaseController):
     def __init__(self, lineBotApi: LineBotApi, db: Client, gameService=None, userService=None):
         super().__init__(lineBotApi, db, gameService, userService)
 
-    def handleEvent(self, event, gameId:str):
-        self.consoleArgument = ConsoleArgument(gameId, self.lineBotApi.get_profile(
-            event.source.user_id).display_name, 15000)
-        if isinstance(event, PostbackEvent):
-            data = PostbackData.parse(event.postback.data)
-            if data.action == PostbackAction.LeaveConfirm:
-                self.recordAndReply(
-                    event, ViewFactory.leaveConfirm(self.consoleArgument))
-            elif data.action == PostbackAction.Leave:
-                if self.userService.isLastMessage(event.source.user_id, data.messageId):
-                    self.gameService.leaveGame(event.source.user_id)
-                    self.recordAndReply(event, ViewFactory.leavedGame())
-            elif data.action == PostbackAction.UserInfo:
-                pass
-            return
+    def handleEvent(self, event, gameId: str):
+        userId = event.source.user_id
+        responseContext = None
 
-        self.recordAndReply(
-            event, ViewFactory.textWithConsole(self.consoleArgument))
+        try:
+            if isinstance(event, PostbackEvent):
+                data = PostbackData.parse(event.postback.data)
+                if data.action == PostbackAction.LeaveConfirm:
+                    self.recordAndReply(
+                        event, ViewFactory.leaveConfirm(self.getConsoleArgument(gameId, userId)))
+                elif data.action == PostbackAction.Leave:
+                    if self.userService.isLastMessage(userId, data.messageId):
+                        self.gameService.leaveGame(userId)
+                        self.userService.delete(userId)
+                        self.recordAndReply(event, ViewFactory.leavedGame())
+                    else:
+                        self.recordAndReply(event, ViewFactory.buttonExpired())
+                elif data.action == PostbackAction.UserInfo:
+                    pass
+                elif data.action == PostbackAction.Earn:
+                    responseContext = "Earn"
+                    self.recordAndReply(event, ViewFactory.askEarnAmount())
+                elif data.action == PostbackAction.Pay:
+                    responseContext = "Pay"
+                    self.recordAndReply(event, ViewFactory.askPayAmount())
+                return
+
+            userContext = self.userService.getContext(userId)
+            if userContext != None:
+                if userContext == "Earn":
+                    try:
+                        if not isinstance(event, MessageEvent) or not isinstance(event.message, TextMessage):
+                            raise ArgumentError()
+                        amount = int(event.message.text)
+                        if amount <= 0:
+                            raise ArgumentError()
+                        self.userService.addBalance(userId, amount)
+                        self.recordAndReply(event, ViewFactory.OperateSuccess(
+                            self.getConsoleArgument(gameId, userId), f"操作成功~\n您領取了 ${amount}"))
+                        self.gameService.logGameRecord(
+                            gameId, f"{self.getUserName(userId)} 領取了 ${amount}")
+                    except ArgumentError:
+                        responseContext = userContext
+                        self.recordAndReply(event, ViewFactory.inputError())
+                elif userContext == "Pay":
+                    try:
+                        if not isinstance(event, MessageEvent) or not isinstance(event.message, TextMessage):
+                            raise ArgumentError()
+                        amount = int(event.message.text)
+                        if amount <= 0:
+                            raise ArgumentError()
+                        self.userService.addBalance(userId, amount * -1)
+                        self.recordAndReply(event, ViewFactory.OperateSuccess(
+                            self.getConsoleArgument(gameId, userId), f"操作成功~\n您繳納了 ${amount}"))
+                        self.gameService.logGameRecord(
+                            gameId, f"{self.getUserName(userId)} 繳納了 ${amount}")
+                    except ArgumentError:
+                        responseContext = userContext
+                        self.recordAndReply(event, ViewFactory.inputError())
+                return
+
+            self.recordAndReply(
+                event, ViewFactory.Console(self.getConsoleArgument(gameId, userId)))
+        finally:
+            self.userService.setContext(userId, responseContext)
+
+    def getConsoleArgument(self, gameId: str, userId: str):
+        return ConsoleArgument(gameId, self.lineBotApi.get_profile(
+            userId).display_name, self.userService.getBalance(userId))
+
+    def getUserName(self, userId):
+        return self.lineBotApi.get_profile(userId).display_name
