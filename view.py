@@ -1,9 +1,10 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
+import string
 import uuid
 from linebot.models import *
 
-from models import GameLog, PostbackData, PostbackAction
+from models import GameLog, PostbackData, PostbackType
 
 
 class View:
@@ -18,6 +19,7 @@ class ConsoleArgument:
         self.username = username
         self.balance = balance
         self.logs = logs
+
 
 class ViewFactory:
     def greeting():
@@ -52,7 +54,7 @@ class ViewFactory:
             }
         """
         template = template.replace(
-            "@CreateGame", PostbackData(PostbackAction.CreateGame).toFormatedJSON())
+            "@CreateGame", PostbackData(PostbackType.CreateGame).toFormatedJSON())
         return View("", FlexSendMessage(alt_text="請建立或加入遊戲", contents=json.loads(template, strict=False)))
 
     def joinGameFail():
@@ -98,7 +100,7 @@ class ViewFactory:
         }"""
         id = str(uuid.uuid4())
         template = template.replace(
-            "@Leave", PostbackData(PostbackAction.Leave, id).toFormatedJSON())
+            "@Leave", PostbackData(PostbackType.Leave, id).toFormatedJSON())
         message = json.loads(template, strict=False)
         message["header"] = ViewFactory._getGameHeader(argument)
         return View(id, FlexSendMessage(alt_text="您確定要退出嗎?", contents=message))
@@ -121,6 +123,39 @@ class ViewFactory:
                 QuickReplyButton(action=MessageAction(
                     label="2000", text="2000")),
             ])))
+
+    def askTransferTarget(argument: ConsoleArgument, players: dict):
+        template = """{
+            "type": "bubble",
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {
+                        "type": "text",
+                        "text": "請選擇匯款對象",
+                        "wrap": true
+                    }
+                ]
+            },
+            "footer": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                
+                ]
+            }
+        }"""
+        id = str(uuid.uuid4())
+        message = json.loads(template, strict=False)
+        message["header"] = ViewFactory._getGameHeader(argument)
+        for playerId, playerName in players.items():
+            message["footer"]["contents"].append(ButtonComponent(action=PostbackAction(
+                label=playerName, data=PostbackData(PostbackType.SelectTransferTarget, id, playerId).toFormatedJSON())))
+        return View(id, FlexSendMessage(alt_text="請選擇匯款對象", contents=message))
+
+    def askTransferAmount(toPlayerName: str):
+        return View("", TextSendMessage(text=f"您要匯給 {toPlayerName} 多少錢"))
 
     def inputError():
         return View("", TextSendMessage(text="輸入錯誤，請重新輸入"))
@@ -270,23 +305,24 @@ class ViewFactory:
             ]
         }"""
         template = template.replace(
-            "@Earn", PostbackData(PostbackAction.Earn, id).toFormatedJSON())
+            "@Earn", PostbackData(PostbackType.Earn, id).toFormatedJSON())
         template = template.replace(
-            "@Pay", PostbackData(PostbackAction.Pay, id).toFormatedJSON())
+            "@Pay", PostbackData(PostbackType.Pay, id).toFormatedJSON())
         template = template.replace(
-            "@Transfer", PostbackData(PostbackAction.Transfer, id).toFormatedJSON())
+            "@Transfer", PostbackData(PostbackType.Transfer, id).toFormatedJSON())
         template = template.replace(
-            "@Chance", PostbackData(PostbackAction.Chance, id).toFormatedJSON())
+            "@Chance", PostbackData(PostbackType.Chance, id).toFormatedJSON())
         template = template.replace(
-            "@Destiny", PostbackData(PostbackAction.Destiny, id).toFormatedJSON())
+            "@Destiny", PostbackData(PostbackType.Destiny, id).toFormatedJSON())
         template = template.replace(
-            "@LeaveConfirm", PostbackData(PostbackAction.LeaveConfirm, id).toFormatedJSON())
+            "@LeaveConfirm", PostbackData(PostbackType.LeaveConfirm, id).toFormatedJSON())
         template = template.replace(
-            "@UserInfo", PostbackData(PostbackAction.UserInfo, id).toFormatedJSON())
+            "@UserInfo", PostbackData(PostbackType.UserInfo, id).toFormatedJSON())
         message = json.loads(template, strict=False)
         message["contents"][0]["header"] = ViewFactory._getGameHeader(argument)
         if len(argument.logs) > 0:
-            message["contents"].append(ViewFactory._getGameLogBubble(argument.logs))
+            message["contents"].append(
+                ViewFactory._getGameLogBubble(argument.logs))
         for bubble in bubbles:
             message["contents"].append(bubble)
         alt_text = text
@@ -342,13 +378,14 @@ class ViewFactory:
             else:
                 time //= 60
                 text = f"{time}分鐘前" if time < 60 else f"{time//60}小時前"
-            
+
             message["body"]["contents"][2]["contents"].append(
                 BoxComponent(layout="horizontal", contents=[
-                    TextComponent(text=str(log), size="sm", color="#555555", flex=3),
+                    TextComponent(text=str(log), size="sm",
+                                  color="#555555", flex=3,wrap=True),
                     TextComponent(
-                        text=text, 
-                        size="sm", color="#555555", flex=0, align_items="end"),
+                        text=text,
+                        size="sm", color="#555555", flex=0, align_items="end", margin="md"),
                 ]))
-                
+
         return message

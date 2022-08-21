@@ -3,7 +3,7 @@ import random
 from google.cloud import firestore
 from google.cloud.firestore import Client
 
-from models import GameLog
+from models import GameLog, UserContext
 
 
 class GameService:
@@ -28,7 +28,7 @@ class GameService:
             gameDoc = self._collection.document(gameId)
             if not gameDoc.get().exists:
                 break
-        gameDoc.set({
+        gameDoc.create({
             "UpdateTime": datetime.now(),
             "Members": memberIds,
             "GameLogs": [],
@@ -67,7 +67,7 @@ class GameService:
 
     def AddGameLog(self, gameId: str, gameLog: GameLog):
         self._collection.document(gameId).update({
-            "GameLogs": firestore.ArrayUnion([gameLog.toDict()])
+            "GameLogs": firestore.ArrayUnion([dict(gameLog)])
         })
 
     def getGameLogs(self, gameId: str):
@@ -76,6 +76,11 @@ class GameService:
         for log in logs:
             result.append(GameLog.parse(log))
         return result
+
+    def getMemberIds(self, gameId: str, excludeId: str):
+        memberIds = self._collection.document(gameId).get().get("Members")
+        memberIds.remove(excludeId)
+        return memberIds
 
 
 class UserService:
@@ -111,11 +116,11 @@ class UserService:
         return self._collection.document(userId).get().get("Balance")
 
     def getContext(self, userId: str):
-        return self._collection.document(userId).get().get("Context")
+        return UserContext.parse(self._collection.document(userId).get().get("Context"))
 
-    def setContext(self, userId: str, context):
+    def setContext(self, userId: str, context: UserContext):
         self._collection.document(userId).update({
-            "Context": context
+            "Context": dict(context) if context != None else None
         })
 
     def addBalance(self, userId: str, amount: int):

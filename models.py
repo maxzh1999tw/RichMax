@@ -2,10 +2,9 @@ from datetime import datetime
 import json
 import uuid
 
-
 class PostbackData:
-    def __init__(self, action:str, messageId="", params=None):
-        self.action = action
+    def __init__(self, type:str, messageId="", params=None):
+        self.type = type
         self.messageId = messageId
         self.params = params
 
@@ -15,9 +14,9 @@ class PostbackData:
 
     def parse(value: str):
         data = json.loads(value.replace("\\\"", "\""))
-        return PostbackData(data["action"], data["messageId"], data["params"])
+        return PostbackData(data["type"], data["messageId"], data["params"])
 
-class PostbackAction:
+class PostbackType:
     CreateGame = "CreateGame"
     LeaveConfirm = "LeaveConfirm"
     Leave = "Leave"
@@ -25,6 +24,7 @@ class PostbackAction:
     Earn = "Earn"
     Pay = "Pay"
     Transfer = "Transfer"
+    SelectTransferTarget = "SelectTransferTarget"
     Chance = "Chance"
     Destiny = "Destiny"
 
@@ -40,15 +40,9 @@ class GameLog:
     def parse(obj: dict):
         return GameLog(obj["message"], obj["action"], obj["value"], obj["id"], obj["time"], obj["canceled"])
 
-    def toDict(self):
-        return {
-            "id": self.id,
-            "time": self.time,
-            "message": self.message,
-            "action": self.action,
-            "value": self.value,
-            "canceled": self.canceled
-        }
+    def __iter__(self):
+        for key in self.__dict__:
+            yield key, getattr(self, key)
 
     def __str__(self):
         return f"{self.message}{'(已取消)' if self.canceled else ''}"
@@ -57,3 +51,21 @@ class GameLogAction:
     Earn = "Earn"
     Pay = "Pay"
     Transfer = "Transfer"
+
+class UserContext:
+    def __init__(self, type: str, params=None):
+        self.type = type
+        self.params = params
+
+    def __iter__(self):
+        for key in self.__dict__:
+            yield key, getattr(self, key)
+    
+    def parse(obj: dict):
+        return UserContext(obj["type"], obj["params"]) if obj != None else None
+
+
+class UserContextType:
+    Earn = "Earn"
+    Pay = "Pay"
+    TransferAmount = "TransferAmount"
