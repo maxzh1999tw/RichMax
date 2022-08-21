@@ -2,7 +2,7 @@ from argparse import ArgumentError
 from linebot import LineBotApi
 from linebot.models import *
 from google.cloud.firestore import Client
-from postback import PostbackData, PostbackAction
+from models import *
 
 from services import GameService, UserService
 from view import ConsoleArgument, View, ViewFactory
@@ -107,10 +107,10 @@ class GameController(BaseController):
                         if amount <= 0:
                             raise ArgumentError()
                         self.userService.addBalance(userId, amount)
+                        self.gameService.AddGameLog(gameId, GameLog(
+                            f"{self.getUserName(userId)} 領取了 ${amount}", GameLogAction.Earn, amount))
                         self.recordAndReply(event, ViewFactory.OperateSuccess(
                             self.getConsoleArgument(gameId, userId), f"操作成功~\n您領取了 ${amount}"))
-                        self.gameService.logGameRecord(
-                            gameId, f"{self.getUserName(userId)} 領取了 ${amount}")
                     except ArgumentError:
                         responseContext = userContext
                         self.recordAndReply(event, ViewFactory.inputError())
@@ -122,10 +122,10 @@ class GameController(BaseController):
                         if amount <= 0:
                             raise ArgumentError()
                         self.userService.addBalance(userId, amount * -1)
+                        self.gameService.AddGameLog(gameId, GameLog(
+                            f"{self.getUserName(userId)} 繳納了 ${amount}", GameLogAction.Pay, amount))
                         self.recordAndReply(event, ViewFactory.OperateSuccess(
                             self.getConsoleArgument(gameId, userId), f"操作成功~\n您繳納了 ${amount}"))
-                        self.gameService.logGameRecord(
-                            gameId, f"{self.getUserName(userId)} 繳納了 ${amount}")
                     except ArgumentError:
                         responseContext = userContext
                         self.recordAndReply(event, ViewFactory.inputError())
@@ -137,8 +137,11 @@ class GameController(BaseController):
             self.userService.setContext(userId, responseContext)
 
     def getConsoleArgument(self, gameId: str, userId: str):
-        return ConsoleArgument(gameId, self.lineBotApi.get_profile(
-            userId).display_name, self.userService.getBalance(userId))
+        return ConsoleArgument(
+            gameId,
+            self.lineBotApi.get_profile(userId).display_name,
+            self.userService.getBalance(userId),
+            self.gameService.getGameLogs(gameId))
 
     def getUserName(self, userId):
         return self.lineBotApi.get_profile(userId).display_name

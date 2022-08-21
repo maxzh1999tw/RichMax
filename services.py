@@ -3,6 +3,8 @@ import random
 from google.cloud import firestore
 from google.cloud.firestore import Client
 
+from models import GameLog
+
 
 class GameService:
 
@@ -26,10 +28,10 @@ class GameService:
             gameDoc = self._collection.document(gameId)
             if not gameDoc.get().exists:
                 break
-        gameDoc.create({
+        gameDoc.set({
             "UpdateTime": datetime.now(),
             "Members": memberIds,
-            "Records": [],
+            "GameLogs": [],
         })
         return gameId
 
@@ -63,10 +65,17 @@ class GameService:
                     "Members": firestore.ArrayRemove([userId])
                 })
 
-    def logGameRecord(self, gameId: str, record: str):
+    def AddGameLog(self, gameId: str, gameLog: GameLog):
         self._collection.document(gameId).update({
-            "Records": firestore.ArrayUnion(record)
+            "GameLogs": firestore.ArrayUnion([gameLog.toDict()])
         })
+
+    def getGameLogs(self, gameId: str):
+        logs = self._collection.document(gameId).get().get("GameLogs")[-10:]
+        result = []
+        for log in logs:
+            result.append(GameLog.parse(log))
+        return result
 
 
 class UserService:
@@ -93,7 +102,7 @@ class UserService:
             doc.delete()
 
     def initGameData(self, userId: str):
-        self._collection.document(userId).update({
+        self._collection.document(userId).set({
             "Balance": UserService._initBalance,
             "Context": None,
         })

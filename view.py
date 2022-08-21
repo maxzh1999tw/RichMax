@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
 import json
 import uuid
 from linebot.models import *
 
-from postback import PostbackData, PostbackAction
+from models import GameLog, PostbackData, PostbackAction
 
 
 class View:
@@ -12,11 +13,11 @@ class View:
 
 
 class ConsoleArgument:
-    def __init__(self, gameId: str, username: str, balance: int):
+    def __init__(self, gameId: str, username: str, balance: int, logs: list = []):
         self.gameId = gameId
         self.username = username
         self.balance = balance
-
+        self.logs = logs
 
 class ViewFactory:
     def greeting():
@@ -107,16 +108,18 @@ class ViewFactory:
 
     def askEarnAmount():
         return View("",  TextSendMessage(
-            text="您要領取多少錢", 
+            text="您要領取多少錢",
             quick_reply=QuickReply([
-                QuickReplyButton(action=MessageAction(label="2000", text="2000")), 
+                QuickReplyButton(action=MessageAction(
+                    label="2000", text="2000")),
             ])))
 
     def askPayAmount():
         return View("", TextSendMessage(
-            text="您要繳多少錢", 
+            text="您要繳多少錢",
             quick_reply=QuickReply([
-                QuickReplyButton(action=MessageAction(label="2000", text="2000")), 
+                QuickReplyButton(action=MessageAction(
+                    label="2000", text="2000")),
             ])))
 
     def inputError():
@@ -282,12 +285,70 @@ class ViewFactory:
             "@UserInfo", PostbackData(PostbackAction.UserInfo, id).toFormatedJSON())
         message = json.loads(template, strict=False)
         message["contents"][0]["header"] = ViewFactory._getGameHeader(argument)
+        if len(argument.logs) > 0:
+            message["contents"].append(ViewFactory._getGameLogBubble(argument.logs))
         for bubble in bubbles:
             message["contents"].append(bubble)
         alt_text = text
         if text != None:
             template = message["contents"][0]["body"]["contents"][0]["text"] = text
         else:
-            del message["contents"][0]["body"]
+            message["contents"][0]["body"]["contents"] = []
             alt_text = "控制面板"
         return View(id, FlexSendMessage(alt_text=alt_text, contents=message))
+
+    def _getGameLogBubble(logs: list[GameLog]):
+        template = """{
+            "type": "bubble",
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                    {
+                        "type": "text",
+                        "text": "操作紀錄",
+                        "weight": "bold",
+                        "size": "xxl",
+                        "margin": "md"
+                    },
+                    {
+                        "type": "separator",
+                        "margin": "xxl"
+                    },
+                    {
+                        "type": "box",
+                        "layout": "vertical",
+                        "margin": "xxl",
+                        "spacing": "sm",
+                        "contents": [
+                            
+                        ]
+                    }
+                ]
+            },
+            "styles": {
+                "footer": {
+                    "separator": true
+                }
+            }
+        }"""
+        message = json.loads(template, strict=False)
+        for log in logs:
+            time = (datetime.now() - log.time.replace(tzinfo=None)).seconds
+            if time < 3:
+                text = "剛剛"
+            elif time < 60:
+                text = f"{time}秒前"
+            else:
+                time //= 60
+                text = f"{time}分鐘前" if time < 60 else f"{time//60}小時前"
+            
+            message["body"]["contents"][2]["contents"].append(
+                BoxComponent(layout="horizontal", contents=[
+                    TextComponent(text=str(log), size="sm", color="#555555", flex=3),
+                    TextComponent(
+                        text=text, 
+                        size="sm", color="#555555", flex=0, align_items="end"),
+                ]))
+                
+        return message
