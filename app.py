@@ -1,6 +1,6 @@
 from linebot import (LineBotApi, WebhookParser)
 from google.cloud import firestore
-from controller import *
+from controllers import *
 
 from services import GameService
 

@@ -32,6 +32,8 @@ class GameService:
             "UpdateTime": datetime.now(),
             "Members": memberIds,
             "GameLogs": [],
+            "DestinyCards": [],
+            "ChanceCards":[]
         })
         return gameId
 

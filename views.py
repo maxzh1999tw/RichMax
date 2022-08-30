@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-import string
 import uuid
 from linebot.models import *
 

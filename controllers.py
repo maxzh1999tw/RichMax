@@ -2,14 +2,16 @@ from argparse import ArgumentError
 from linebot import LineBotApi
 from linebot.models import *
 from google.cloud.firestore import Client
+from card.cardServices import ChanceService, DestinyService
 from models import *
 
 from services import GameService, UserService
-from view import ConsoleArgument, View, ViewFactory
+from views import ConsoleArgument, View, ViewFactory
 
 
 class BaseController:
     def __init__(self, lineBotApi: LineBotApi, db: Client, gameService=None, userService=None):
+        self._db = db
         self.lineBotApi = lineBotApi
         self.gameService = GameService(
             db) if gameService == None else gameService
@@ -76,6 +78,7 @@ class GameController(BaseController):
 
         try:
             if isinstance(event, PostbackEvent):
+                print(event.postback.data)
                 data = PostbackData.parse(event.postback.data)
                 if data.type == PostbackType.LeaveConfirm:
                     self.recordAndReply(
@@ -111,6 +114,18 @@ class GameController(BaseController):
                         self.recordAndReply(event, ViewFactory.askTransferAmount(self.getUserName(data.params)))
                     else:
                         self.recordAndReply(event, ViewFactory.buttonExpired())
+                elif data.type == PostbackType.Chance:
+                    if data.params == None:
+                        cardService = ChanceService(self._db)
+                        viewFunc = cardService.draw(gameId)
+                        self.recordAndReply(event, viewFunc(self.getConsoleArgument(gameId, userId)))
+                elif data.type == PostbackType.Destiny:
+                    cardService = DestinyService(self._db)
+                    if data.params == None:
+                        cardViewFunc = cardService.draw(gameId)
+                        self.recordAndReply(event, cardViewFunc(self.getConsoleArgument(gameId, userId)))
+                    else:
+                        cardService.excuteCard(data.params["name"], event, self, gameId)
                 return
 
             userContext = self.userService.getContext(userId)
