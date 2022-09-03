@@ -77,6 +77,16 @@ class ChanceService(BaseCardService):
             "豪華坐駕": (None, lambda argument : CardViewFactory.tripleDice(argument)),
             "都更協調會": (None, lambda argument : CardViewFactory.urbanRenewal(argument)),
             "有關係沒關係": (None, lambda argument : CardViewFactory.notGuilty(argument)),
+            "公共運輸": (None, lambda argument : CardViewFactory.goToStation(argument)),
+            "進退有據": (None, lambda argument : CardViewFactory.forwardOrBackward(argument)),
+            "儲蓄險": (None, lambda argument : CardViewFactory.wholeLife(argument)),
+            "超額保險": (None, lambda argument : CardViewFactory.excessInsurance(argument)),
+            "一起走": (None, lambda argument : CardViewFactory.takeMeAway(argument)),
+            "沒關係有關係": (None, lambda argument : CardViewFactory.youGoToJail(argument)),
+            "施比受更有福": (None, lambda argument : CardViewFactory.giveLand(argument)),
+            "莫拉克風災": (None, lambda argument : CardViewFactory.fixHouse(argument)),
+            "天手力": (None, lambda argument : CardViewFactory.changePosition(argument)),
+            "不給機會": (None, lambda argument : CardViewFactory.antiChance(argument)), 
         }
         super().__init__(db, "ChanceCards", cardDict)
 
