@@ -73,10 +73,10 @@ class DestinyService(BaseCardService):
 class ChanceService(BaseCardService):
     def __init__(self, db: Client):
         cardDict = {
-            "股票當沖": (self.stockHit, None),
-            "豪華坐駕": (None, None),
-            "都更協調會": (None, None),
-            "有關係沒關係": (None, None),
+            "股票當沖": (self.stockHit, lambda argument : CardViewFactory.stockHit(argument, 3)),
+            "豪華坐駕": (None, lambda argument : CardViewFactory.tripleDice(argument)),
+            "都更協調會": (None, lambda argument : CardViewFactory.urbanRenewal(argument)),
+            "有關係沒關係": (None, lambda argument : CardViewFactory.notGuilty(argument)),
         }
         super().__init__(db, "ChanceCards", cardDict)
 
@@ -104,12 +104,9 @@ class ChanceService(BaseCardService):
         controller.gameService.AddGameLog(gameId, GameLog(
             f"{controller.getUserName(userId)} 玩股票當沖，{text}了 ${amount}", resultType, amount))
 
-        if params["times"] < 3:
-            pass
+        argument = controller.getConsoleArgument(gameId, userId)
+        text = f"當沖失敗...您失去了 ${amount}" if resultType == GameLogAction.Pay else f"當沖賺錢!!您獲得了 ${amount}"
+        if params["times"] == 1:
+            controller.recordAndReply(event, ViewFactory.Console(argument, text=text))
         else:
-            if resultType == GameLogAction.Pay:
-                controller.recordAndReply(event, CardViewFactory.stockHitResultContinuable(
-                    controller.getConsoleArgument(gameId, userId), f"當沖失敗...您失去了 ${amount}", params["times"] + 1))
-            else:
-                controller.recordAndReply(event, CardViewFactory.stockHitResultEnd(
-                    controller.getConsoleArgument(gameId, userId), f"當沖賺錢!!您獲得了 ${amount}"))
+            controller.recordAndReply(event, CardViewFactory.stockHit(argument, params["times"] - 1, text))

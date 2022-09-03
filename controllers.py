@@ -89,7 +89,7 @@ class GameController(BaseController):
                         self.userService.delete(userId)
                         self.recordAndReply(event, ViewFactory.leavedGame())
                     else:
-                        self.recordAndReply(event, ViewFactory.buttonExpired())
+                        self.lineBotApi.reply_message(event.reply_token, ViewFactory.buttonExpired())
                 elif data.type == PostbackType.UserInfo:
                     pass
                 elif data.type == PostbackType.Earn:
@@ -113,19 +113,27 @@ class GameController(BaseController):
                         responseContext = UserContext(UserContextType.TransferAmount, data.params)
                         self.recordAndReply(event, ViewFactory.askTransferAmount(self.getUserName(data.params)))
                     else:
-                        self.recordAndReply(event, ViewFactory.buttonExpired())
+                        self.lineBotApi.reply_message(event.reply_token, ViewFactory.buttonExpired())
                 elif data.type == PostbackType.Chance:
+                    cardService = ChanceService(self._db)
                     if data.params == None:
-                        cardService = ChanceService(self._db)
                         viewFunc = cardService.draw(gameId)
                         self.recordAndReply(event, viewFunc(self.getConsoleArgument(gameId, userId)))
+                    else:
+                        if self.userService.isLastMessage(userId, data.messageId):
+                            cardService.excuteCard(data.params["name"], event, self, gameId, data.params)
+                        else:
+                            self.lineBotApi.reply_message(event.reply_token, ViewFactory.buttonExpired())
                 elif data.type == PostbackType.Destiny:
                     cardService = DestinyService(self._db)
                     if data.params == None:
                         cardViewFunc = cardService.draw(gameId)
                         self.recordAndReply(event, cardViewFunc(self.getConsoleArgument(gameId, userId)))
                     else:
-                        cardService.excuteCard(data.params["name"], event, self, gameId)
+                        if self.userService.isLastMessage(userId, data.messageId):
+                            cardService.excuteCard(data.params["name"], event, self, gameId, data.params)
+                        else:
+                            self.lineBotApi.reply_message(event.reply_token, ViewFactory.buttonExpired())
                 return
 
             userContext = self.userService.getContext(userId)

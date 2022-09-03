@@ -105,7 +105,7 @@ class ViewFactory:
         return View(id, FlexSendMessage(alt_text="您確定要退出嗎?", contents=message))
 
     def buttonExpired():
-        return View("", TextSendMessage(text="阿噢，這顆按鈕已經過期了，請重新呼叫選單~"))
+        return TextSendMessage(text="阿噢，這顆按鈕已經過期了，請重新呼叫選單~")
 
     def askEarnAmount():
         return View("",  TextSendMessage(
