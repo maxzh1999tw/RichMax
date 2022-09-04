@@ -43,8 +43,8 @@ class BaseCardService:
     def balanceCardExcution(self, event, controller, gameId: str, action: str, amount: int, reason: str):
         userId = event.source.user_id
         controller.userService.addBalance(userId, amount if action == GameLogAction.Earn else amount * -1)
-        text = controller.getUserName(userId) + f" {reason}，" + ("得到" if action == GameLogAction.Earn else "失去") + f"了 ${amount}"
-        controller.gameService.AddGameLog(gameId, GameLog(text, GameLogAction.Earn, amount))
+        text = f"{reason}，" + ("得到" if action == GameLogAction.Earn else "失去") + f"了 ${amount}"
+        controller.gameService.AddGameLog(gameId, GameLog(controller.getUserName(userId), text, GameLogAction.Earn, amount))
         text = "領取" if action == GameLogAction.Earn else "繳納"
         controller.recordAndReply(event, ViewFactory.OperateSuccess(
             controller.getConsoleArgument(gameId, userId), f"操作成功~\n您{text}了 ${amount}"))
@@ -137,8 +137,8 @@ class ChanceService(BaseCardService):
         controller.userService.addBalance(
             userId, amount if resultType == GameLogAction.Earn else amount * -1)
         text = "獲得" if resultType == GameLogAction.Earn else "失去"
-        controller.gameService.AddGameLog(gameId, GameLog(
-            f"{controller.getUserName(userId)} 玩股票當沖，{text}了 ${amount}", resultType, amount))
+        controller.gameService.AddGameLog(gameId, GameLog(controller.getUserName(userId),
+            f"玩股票當沖，{text}了 ${amount}", resultType, amount))
 
         argument = controller.getConsoleArgument(gameId, userId)
         text = f"當沖失敗...您失去了 ${amount}" if resultType == GameLogAction.Pay else f"當沖賺錢!!您獲得了 ${amount}"

@@ -51,9 +51,9 @@ class DefaultController(BaseController):
                     self.lineBotApi.get_profile(
                         userId).display_name,
                     15000)))
-            return
+                return
 
-        if isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
+        elif isinstance(event, MessageEvent) and isinstance(event.message, TextMessage):
             if GameService.isGameId(event.message.text):
                 if self.gameService.joinGame(event.message.text, userId):
                     self.userService.initGameData(userId)
@@ -80,7 +80,11 @@ class GameController(BaseController):
             if isinstance(event, PostbackEvent):
                 print(event.postback.data)
                 data = PostbackData.parse(event.postback.data)
-                if data.type == PostbackType.LeaveConfirm:
+                if data.type == PostbackType.Console:
+                    if self.userService.isLastMessage(userId, data.messageId):
+                        self.recordAndReply(
+                            event, ViewFactory.Console(self.getConsoleArgument(gameId, userId)))
+                elif data.type == PostbackType.LeaveConfirm:
                     self.recordAndReply(
                         event, ViewFactory.leaveConfirm(self.getConsoleArgument(gameId, userId)))
                 elif data.type == PostbackType.Leave:
@@ -88,16 +92,14 @@ class GameController(BaseController):
                         self.gameService.leaveGame(userId)
                         self.userService.delete(userId)
                         self.recordAndReply(event, ViewFactory.leavedGame())
-                    else:
-                        self.lineBotApi.reply_message(event.reply_token, ViewFactory.buttonExpired())
                 elif data.type == PostbackType.UserInfo:
                     pass
                 elif data.type == PostbackType.Earn:
                     responseContext = UserContext(UserContextType.Earn)
-                    self.recordAndReply(event, ViewFactory.askEarnAmount())
+                    self.recordAndReply(event, ViewFactory.askAmount(self.getConsoleArgument(gameId, userId), "領取"))
                 elif data.type == PostbackType.Pay:
                     responseContext = UserContext(UserContextType.Pay)
-                    self.recordAndReply(event, ViewFactory.askPayAmount())
+                    self.recordAndReply(event, ViewFactory.askAmount(self.getConsoleArgument(gameId, userId), "繳交"))
                 elif data.type == PostbackType.Transfer:
                     players = {}
                     for memberId in self.gameService.getMemberIds(gameId, userId):
@@ -111,19 +113,16 @@ class GameController(BaseController):
                 elif data.type == PostbackType.SelectTransferTarget:
                     if self.userService.isLastMessage(userId, data.messageId):
                         responseContext = UserContext(UserContextType.TransferAmount, data.params)
-                        self.recordAndReply(event, ViewFactory.askTransferAmount(self.getUserName(data.params)))
-                    else:
-                        self.lineBotApi.reply_message(event.reply_token, ViewFactory.buttonExpired())
+                        self.recordAndReply(event, ViewFactory.askAmount(self.getConsoleArgument(gameId, userId), 
+                        f"匯給 {self.getUserName(data.params)} "))
                 elif data.type == PostbackType.Chance:
                     cardService = ChanceService(self._db)
                     if data.params == None:
-                        viewFunc = cardService.draw(gameId)
-                        self.recordAndReply(event, viewFunc(self.getConsoleArgument(gameId, userId)))
+                        cardViewFunc = cardService.draw(gameId)
+                        self.recordAndReply(event, cardViewFunc(self.getConsoleArgument(gameId, userId)))
                     else:
                         if self.userService.isLastMessage(userId, data.messageId):
                             cardService.excuteCard(data.params["name"], event, self, gameId, data.params)
-                        else:
-                            self.lineBotApi.reply_message(event.reply_token, ViewFactory.buttonExpired())
                 elif data.type == PostbackType.Destiny:
                     cardService = DestinyService(self._db)
                     if data.params == None:
@@ -132,8 +131,6 @@ class GameController(BaseController):
                     else:
                         if self.userService.isLastMessage(userId, data.messageId):
                             cardService.excuteCard(data.params["name"], event, self, gameId, data.params)
-                        else:
-                            self.lineBotApi.reply_message(event.reply_token, ViewFactory.buttonExpired())
                 return
 
             userContext = self.userService.getContext(userId)
@@ -146,13 +143,13 @@ class GameController(BaseController):
                         if amount <= 0:
                             raise ArgumentError(None, "")
                         self.userService.addBalance(userId, amount)
-                        self.gameService.AddGameLog(gameId, GameLog(
-                            f"{self.getUserName(userId)} 領取了 ${amount}", GameLogAction.Earn, amount))
+                        self.gameService.AddGameLog(gameId, GameLog(self.getUserName(userId),
+                            f"領取了 ${amount}", GameLogAction.Earn, amount))
                         self.recordAndReply(event, ViewFactory.OperateSuccess(
                             self.getConsoleArgument(gameId, userId), f"操作成功~\n您領取了 ${amount}"))
                     except (ArgumentError, ValueError):
                         responseContext = userContext
-                        self.recordAndReply(event, ViewFactory.inputError())
+                        self.recordAndReply(event, ViewFactory.inputError(self.getConsoleArgument(gameId, userId)))
                 elif userContext.type == UserContextType.Pay:
                     try:
                         if not isinstance(event, MessageEvent) or not isinstance(event.message, TextMessage):
@@ -161,13 +158,13 @@ class GameController(BaseController):
                         if amount <= 0 or amount > self.userService.getBalance(userId):
                             raise ArgumentError(None, "")
                         self.userService.addBalance(userId, amount * -1)
-                        self.gameService.AddGameLog(gameId, GameLog(
-                            f"{self.getUserName(userId)} 繳納了 ${amount}", GameLogAction.Pay, amount))
+                        self.gameService.AddGameLog(gameId, GameLog(self.getUserName(userId),
+                            f"繳納了 ${amount}", GameLogAction.Pay, amount))
                         self.recordAndReply(event, ViewFactory.OperateSuccess(
                             self.getConsoleArgument(gameId, userId), f"操作成功~\n您繳納了 ${amount}"))
                     except (ArgumentError, ValueError):
                         responseContext = userContext
-                        self.recordAndReply(event, ViewFactory.inputError())
+                        self.recordAndReply(event, ViewFactory.inputError(self.getConsoleArgument(gameId, userId)))
                 elif userContext.type == UserContextType.TransferAmount:
                     try:
                         if not isinstance(event, MessageEvent) or not isinstance(event.message, TextMessage):
@@ -179,8 +176,8 @@ class GameController(BaseController):
                         self.userService.addBalance(userContext.params, amount)
                         self.userService.addBalance(userId, amount * -1)
                         toPlayerName = self.getUserName(userContext.params)
-                        self.gameService.AddGameLog(gameId, GameLog(
-                            f"{self.getUserName(userId)} 匯款給 {toPlayerName} ${amount}",
+                        self.gameService.AddGameLog(gameId, GameLog(self.getUserName(userId),
+                            f"匯款給 {toPlayerName} ${amount}",
                             GameLogAction.Transfer,
                             json.dumps(
                                 {"from": userId, "to": userContext.params,
@@ -190,7 +187,7 @@ class GameController(BaseController):
                             self.getConsoleArgument(gameId, userId), f"操作成功~\n您匯了 ${amount} 給 {toPlayerName}"))
                     except (ArgumentError, ValueError) as ex:
                         responseContext = userContext
-                        self.recordAndReply(event, ViewFactory.inputError())
+                        self.recordAndReply(event, ViewFactory.inputError(self.getConsoleArgument(gameId, userId)))
                 return
 
             self.recordAndReply(

@@ -73,7 +73,7 @@ class GameService:
         })
 
     def getGameLogs(self, gameId: str):
-        logs = self._collection.document(gameId).get().get("GameLogs")[-10:]
+        logs = self._collection.document(gameId).get().get("GameLogs")[-7:]
         result = []
         for log in logs:
             result.append(GameLog.parse(log))

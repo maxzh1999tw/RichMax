@@ -17,6 +17,7 @@ class PostbackData:
         return PostbackData(data["type"], data["messageId"], data["params"])
 
 class PostbackType:
+    Console = "Console"
     CreateGame = "CreateGame"
     LeaveConfirm = "LeaveConfirm"
     Leave = "Leave"
@@ -29,7 +30,8 @@ class PostbackType:
     Destiny = "Destiny"
 
 class GameLog:
-    def __init__(self, message: str, action: str, value, id = None, time = None, canceled = False):
+    def __init__(self, name: str, message: str, action: str, value, id = None, time = None, canceled = False):
+        self.name = name
         self.id = str(uuid.uuid4()) if id == None else id
         self.time = datetime.now() if time == None else time
         self.message = message
@@ -38,14 +40,14 @@ class GameLog:
         self.canceled = canceled
     
     def parse(obj: dict):
-        return GameLog(obj["message"], obj["action"], obj["value"], obj["id"], obj["time"], obj["canceled"])
+        return GameLog(obj["name"], obj["message"], obj["action"], obj["value"], obj["id"], obj["time"], obj["canceled"])
 
     def __iter__(self):
         for key in self.__dict__:
             yield key, getattr(self, key)
 
     def __str__(self):
-        return f"{self.message}{'(已取消)' if self.canceled else ''}"
+        return f"{self.message}{'(撤銷)' if self.canceled else ''}"
 
 class GameLogAction:
     Earn = "Earn"
