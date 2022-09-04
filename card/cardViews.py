@@ -1,4 +1,5 @@
 import json
+import random
 import uuid
 from linebot.models import *
 
@@ -12,7 +13,7 @@ class CardViewFactory(ViewFactory):
             "https://thumbs.dreamstime.com/b/bomber-plane-drops-bomb-sketch-engraving-vector-illustration-scratch-board-style-imitation-hand-drawn-image-bomber-plane-drops-159425073.jpg",
             "命運",
             "擊落戰鬥機",
-            "擊落戰鬥機，得 $2000")
+            "擊落戰鬥機，得 $3000")
 
         footer = '''{
             "type": "box",
@@ -42,7 +43,7 @@ class CardViewFactory(ViewFactory):
             "https://pic.pimg.tw/stock2012/1407218694-550000070.jpg",
             "命運",
             "繳學費",
-            "繳學費，失去 $800")
+            "繳學費，失去 $600")
 
         footer = '''{
             "type": "box",
@@ -53,7 +54,7 @@ class CardViewFactory(ViewFactory):
                     "style": "primary",
                     "action": {
                         "type": "postback",
-                        "label": "繳錢",
+                        "label": "繳交款項",
                         "data": "@data"
                     }
                 }
@@ -85,6 +86,216 @@ class CardViewFactory(ViewFactory):
             "立刻去坐牢")
 
         return View("", FlexSendMessage(alt_text="[命運] 牢底坐穿", contents=message))
+
+    def backHome(argument: ConsoleArgument):
+        message = CardViewFactory._cardTemplate(
+            argument,
+            "https://thumbs.dreamstime.com/b/modern-house-vector-illustrations-cartoon-flat-home-apartment-facade-exterior-residential-building-set-icons-isolated-modern-180988199.jpg",
+            "命運",
+            "家人的呼喚",
+            "回到起點並獲得 $2000")
+
+        footer = '''{
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "action": {
+                        "type": "postback",
+                        "label": "領取獎勵",
+                        "data": "@data"
+                    }
+                }
+            ]
+        }'''
+
+        id = str(uuid.uuid4())
+        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
+                                                      id, {"name": "家人的呼喚"}).toFormatedJSON())
+        message["footer"] = json.loads(footer, strict=False)
+        return View(id, FlexSendMessage(alt_text="[命運] 家人的呼喚", contents=message))
+
+    def buildMyLand(argument: ConsoleArgument):
+        message = CardViewFactory._cardTemplate(
+            argument,
+            "https://i.pinimg.com/originals/4b/0a/07/4b0a0783f22cb572c69a53bf0c5505b1.gif",
+            "命運",
+            "土地我做主",
+            "選擇一塊土地蓋一棟房子")
+
+        return View("", FlexSendMessage(alt_text="[命運] 土地我做主", contents=message))
+
+    def happyBirthday(argument: ConsoleArgument):
+        message = CardViewFactory._cardTemplate(
+            argument,
+            "https://i.pinimg.com/originals/ba/2d/e4/ba2de463832c5a7fd003e267bea8bda3.gif",
+            "命運",
+            "生日快樂",
+            "向每人收取禮金1000元")
+
+        return View("", FlexSendMessage(alt_text="[命運] 生日快樂", contents=message))
+
+    def speedingTicket(argument: ConsoleArgument):
+        amount = random.randint(6, 14) * 100
+        message = CardViewFactory._cardTemplate(
+            argument,
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd3KKrEYy3NkE3xlyqSKbYIJ62IUxbEaMM8q7vYd_Vvyvgzg0LTuHsOLmd--EQCL4eS1w&usqp=CAU",
+            "命運",
+            "超速罰單",
+            f"超速被拍，罰款 ${amount}")
+
+        footer = '''{
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "action": {
+                        "type": "postback",
+                        "label": "繳交罰金",
+                        "data": "@data"
+                    }
+                }
+            ]
+        }'''
+
+        id = str(uuid.uuid4())
+        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
+                                                      id, {"name": "超速罰單", "amount": amount}).toFormatedJSON())
+        message["footer"] = json.loads(footer, strict=False)
+
+        return View(id, FlexSendMessage(alt_text="[命運] 超速罰單", contents=message))
+
+    def smallBusiness(argument: ConsoleArgument):
+        message = CardViewFactory._cardTemplate(
+            argument,
+            "https://media.istockphoto.com/vectors/food-market-thailand-vector-id960450496?k=20&m=960450496&s=612x612&w=0&h=YcnmVnzukODKNR5JuHqkfR1TXLvhed2z72guZK06JxQ=",
+            "命運",
+            "小本生意",
+            "小本生意，得 $1000")
+
+        footer = '''{
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "action": {
+                        "type": "postback",
+                        "label": "領取獎勵",
+                        "data": "@data"
+                    }
+                }
+            ]
+        }'''
+
+        id = str(uuid.uuid4())
+        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
+                                                      id, {"name": "小本生意"}).toFormatedJSON())
+        message["footer"] = json.loads(footer, strict=False)
+
+        return View(id, FlexSendMessage(alt_text="[命運] 小本生意", contents=message))
+
+    def jackpot(argument: ConsoleArgument):
+        message = CardViewFactory._cardTemplate(
+            argument,
+            "https://images2.gamme.com.tw/news2/2022/48/30/qJeVoKWckaCXrKQ.jpg",
+            "命運",
+            "中頭彩",
+            "中頭彩，得 $2000")
+
+        footer = '''{
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "action": {
+                        "type": "postback",
+                        "label": "領取獎勵",
+                        "data": "@data"
+                    }
+                }
+            ]
+        }'''
+
+        id = str(uuid.uuid4())
+        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
+                                                      id, {"name": "中頭彩"}).toFormatedJSON())
+        message["footer"] = json.loads(footer, strict=False)
+
+        return View(id, FlexSendMessage(alt_text="[命運] 中頭彩", contents=message))
+
+    def allInBitcoin(argument: ConsoleArgument):
+        earn = True if random.randint(0, 1) == 1 else False
+        text = "大賺，財產翻倍" if earn else "慘賠，財產減半"
+        message = CardViewFactory._cardTemplate(
+            argument,
+            "https://www.moneydj.com/z/sjn/png/GetNewsRptpng.djpng?a=226524",
+            "命運",
+            "All in 比特幣",
+            f"All in 比特幣{text}")
+        
+        buttonText = "領取獎勵" if earn else "繳交款項"
+        
+        footer = '''{
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "action": {
+                        "type": "postback",
+                        "label": "'''+buttonText+'''",
+                        "data": "@data"
+                    }
+                }
+            ]
+        }'''
+
+        id = str(uuid.uuid4())
+        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
+                                                      id, {"name": "All in 比特幣", "earn": earn}).toFormatedJSON())
+        message["footer"] = json.loads(footer, strict=False)
+
+        return View(id, FlexSendMessage(alt_text="[命運] All in 比特幣", contents=message))
+
+    def scammed(argument: ConsoleArgument):
+        message = CardViewFactory._cardTemplate(
+            argument,
+            "https://upload.shejihz.com/2020/01/3e40dcf489017f2a8645cbc7eb70fb6f.jpg",
+            "命運",
+            "詐騙集團",
+            "被詐騙，損失 $1200")
+
+        footer = '''{
+            "type": "box",
+            "layout": "horizontal",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "action": {
+                        "type": "postback",
+                        "label": "繳交款項",
+                        "data": "@data"
+                    }
+                }
+            ]
+        }'''
+
+        id = str(uuid.uuid4())
+        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
+                                                      id, {"name": "詐騙集團"}).toFormatedJSON())
+        message["footer"] = json.loads(footer, strict=False)
+
+        return View(id, FlexSendMessage(alt_text="[命運] 詐騙集團", contents=message))
 
     def stockHit(argument: ConsoleArgument, times: int, text=""):
         template = '''{
