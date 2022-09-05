@@ -79,6 +79,19 @@ class GameService:
             result.append(GameLog.parse(log))
         return result
 
+    def getGameLog(self, gameId: str, gameLogId: str) -> GameLog:
+        logs = self._collection.document(gameId).get().get("GameLogs")
+        return GameLog.parse([x for x in logs if x["id"] == gameLogId][0])
+
+    def rollbackGameLog(self, gameId: str, gameLogId: str):
+        logs = self._collection.document(gameId).get().get("GameLogs")
+        for log in logs:
+            if log["id"] == gameLogId:
+                log["canceled"] = True
+        self._collection.document(gameId).update({
+            "GameLogs": logs
+        })
+
     def getMemberIds(self, gameId: str, excludeId: str):
         memberIds = self._collection.document(gameId).get().get("Members")
         memberIds.remove(excludeId)

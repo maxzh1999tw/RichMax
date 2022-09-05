@@ -44,10 +44,11 @@ class BaseCardService:
         userId = event.source.user_id
         controller.userService.addBalance(userId, amount if action == GameLogAction.Earn else amount * -1)
         text = f"{reason}，" + ("得到" if action == GameLogAction.Earn else "失去") + f"了 ${amount}"
-        controller.gameService.AddGameLog(gameId, GameLog(controller.getUserName(userId), text, GameLogAction.Earn, amount))
+        gameLog = GameLog(controller.getUserName(userId), text, GameLogAction.Earn, amount)
+        controller.gameService.AddGameLog(gameId, gameLog)
         text = "領取" if action == GameLogAction.Earn else "繳納"
         controller.recordAndReply(event, ViewFactory.OperateSuccess(
-            controller.getConsoleArgument(gameId, userId), f"操作成功~\n您{text}了 ${amount}"))
+            controller.getConsoleArgument(gameId, userId), f"操作成功~\n您{text}了 ${amount}", gameLog.id))
 
 class DestinyService(BaseCardService):
     def __init__(self, db: Client):

@@ -522,8 +522,22 @@ class ViewFactory:
 
         return View(id,  FlexSendMessage(alt_text=f"輸入錯誤，請重新輸入", contents=message))
 
-    def OperateSuccess(argument: ConsoleArgument, text: str):
-        return ViewFactory.Console(argument, text=text)
+    def OperateSuccess(argument: ConsoleArgument, text: str, gameLogId: str):
+        id = str(uuid.uuid4())
+        view = ViewFactory.Console(argument, text=text, id=id)
+        message = view.message.contents
+        message.contents[0].body.layout = "horizontal"
+        message.contents[0].body.paddingEnd = "lg"
+        message.contents[0].body.alignItems = "center"
+        message.contents[0].body.contents[0].flex = 3
+        message.contents[0].body.contents.append(ButtonComponent(
+            style="primary",
+            color="#a4a8b0",
+            action=PostbackAction(label="撤銷", data=PostbackData(PostbackType.Rollback, id, {
+                "gameLogId": gameLogId
+            }).toFormatedJSON())
+        ))
+        return view
 
     def _getGameHeader(argument: ConsoleArgument, id="", hideLeave=False):
         template = """{
@@ -950,7 +964,7 @@ class ViewFactory:
                 BoxComponent(layout="horizontal", contents=[
                     BoxComponent(layout="vertical", flex=3, contents=[
                         TextComponent(text=log.name, size="sm", color="#666666", weight="bold", wrap=True),
-                        TextComponent(text=str(log), size="sm", wrap=True)
+                        TextComponent(text=str(log), size="sm", wrap=True, decoration="line-through" if log.canceled else "none")
                     ]),
                     TextComponent(
                         text=text,

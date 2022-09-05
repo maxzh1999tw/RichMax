@@ -18,6 +18,7 @@ class PostbackData:
 
 class PostbackType:
     Console = "Console"
+    Rollback = "Rollback"
     CreateGame = "CreateGame"
     LeaveConfirm = "LeaveConfirm"
     Leave = "Leave"
@@ -47,7 +48,7 @@ class GameLog:
             yield key, getattr(self, key)
 
     def __str__(self):
-        return f"{self.message}{'(撤銷)' if self.canceled else ''}"
+        return f"{self.message}{' (已撤銷)' if self.canceled else ''}"
 
 class GameLogAction:
     Earn = "Earn"

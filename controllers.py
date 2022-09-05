@@ -78,7 +78,6 @@ class GameController(BaseController):
 
         try:
             if isinstance(event, PostbackEvent):
-                print(event.postback.data)
                 data = PostbackData.parse(event.postback.data)
                 if data.type == PostbackType.Console:
                     if self.userService.isLastMessage(userId, data.messageId):
@@ -131,6 +130,19 @@ class GameController(BaseController):
                     else:
                         if self.userService.isLastMessage(userId, data.messageId):
                             cardService.excuteCard(data.params["name"], event, self, gameId, data.params)
+                elif data.type == PostbackType.Rollback:
+                    if self.userService.isLastMessage(userId, data.messageId):
+                        gameLog = self.gameService.getGameLog(gameId, data.params["gameLogId"])
+                        if not gameLog.canceled:
+                            if gameLog.action == GameLogAction.Transfer:
+                                print(gameLog.value)
+                                params = json.loads(gameLog.value)
+                                self.userService.addBalance(params["from"], params["amount"])
+                                self.userService.addBalance(params["to"], params["amount"] * -1)
+                            else:
+                                self.userService.addBalance(userId, gameLog.value * (-1 if gameLog.action == GameLogAction.Earn else 1))
+                            self.gameService.rollbackGameLog(gameId, gameLog.id)
+                            self.recordAndReply(event, ViewFactory.Console(self.getConsoleArgument(gameId, userId), text="撤銷成功~"))
                 return
 
             userContext = self.userService.getContext(userId)
@@ -143,10 +155,10 @@ class GameController(BaseController):
                         if amount <= 0:
                             raise ArgumentError(None, "")
                         self.userService.addBalance(userId, amount)
-                        self.gameService.AddGameLog(gameId, GameLog(self.getUserName(userId),
-                            f"領取了 ${amount}", GameLogAction.Earn, amount))
+                        gameLog = GameLog(self.getUserName(userId), f"領取了 ${amount}", GameLogAction.Earn, amount)
+                        self.gameService.AddGameLog(gameId, gameLog)
                         self.recordAndReply(event, ViewFactory.OperateSuccess(
-                            self.getConsoleArgument(gameId, userId), f"操作成功~\n您領取了 ${amount}"))
+                            self.getConsoleArgument(gameId, userId), f"操作成功~\n您領取了 ${amount}", gameLog.id))
                     except (ArgumentError, ValueError):
                         responseContext = userContext
                         self.recordAndReply(event, ViewFactory.inputError(self.getConsoleArgument(gameId, userId)))
@@ -158,10 +170,10 @@ class GameController(BaseController):
                         if amount <= 0 or amount > self.userService.getBalance(userId):
                             raise ArgumentError(None, "")
                         self.userService.addBalance(userId, amount * -1)
-                        self.gameService.AddGameLog(gameId, GameLog(self.getUserName(userId),
-                            f"繳納了 ${amount}", GameLogAction.Pay, amount))
+                        gameLog =  GameLog(self.getUserName(userId), f"繳納了 ${amount}", GameLogAction.Pay, amount)
+                        self.gameService.AddGameLog(gameId, gameLog)
                         self.recordAndReply(event, ViewFactory.OperateSuccess(
-                            self.getConsoleArgument(gameId, userId), f"操作成功~\n您繳納了 ${amount}"))
+                            self.getConsoleArgument(gameId, userId), f"操作成功~\n您繳納了 ${amount}", gameLog.id))
                     except (ArgumentError, ValueError):
                         responseContext = userContext
                         self.recordAndReply(event, ViewFactory.inputError(self.getConsoleArgument(gameId, userId)))
@@ -176,15 +188,16 @@ class GameController(BaseController):
                         self.userService.addBalance(userContext.params, amount)
                         self.userService.addBalance(userId, amount * -1)
                         toPlayerName = self.getUserName(userContext.params)
-                        self.gameService.AddGameLog(gameId, GameLog(self.getUserName(userId),
+                        gameLog = GameLog(self.getUserName(userId),
                             f"匯款給 {toPlayerName} ${amount}",
                             GameLogAction.Transfer,
                             json.dumps(
                                 {"from": userId, "to": userContext.params,
                                     "amount": amount},
-                                separators=(',', ':')).replace("\"", "\\\"").replace("\n", "")))
+                                separators=(',', ':')))
+                        self.gameService.AddGameLog(gameId, gameLog)
                         self.recordAndReply(event, ViewFactory.OperateSuccess(
-                            self.getConsoleArgument(gameId, userId), f"操作成功~\n您匯了 ${amount} 給 {toPlayerName}"))
+                            self.getConsoleArgument(gameId, userId), f"操作成功~\n您匯了 ${amount} 給 {toPlayerName}", gameLog.id))
                     except (ArgumentError, ValueError) as ex:
                         responseContext = userContext
                         self.recordAndReply(event, ViewFactory.inputError(self.getConsoleArgument(gameId, userId)))
