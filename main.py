@@ -12,13 +12,16 @@ if channel_secret is None:
 if channel_access_token is None:
     print('Specify LINE_CHANNEL_ACCESS_TOKEN as environment variable.')
     sys.exit(1)
-    
+
+# 一個實例只有一個 app
 app = LineBotApp(channel_secret, channel_access_token)
 
 def callback(request):
     try:
+        # 事件來時呼叫 app 處理
         app.serve(request)
     except:
+        # 發生錯誤寫入記錄檔
         traceback.print_exc()
         return 'ERROR'
     return 'OK'

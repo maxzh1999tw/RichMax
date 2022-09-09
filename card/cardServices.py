@@ -37,18 +37,18 @@ class BaseCardService:
     def createNewDeck(self) -> list:
         return list(self.cardDict.keys())
 
-    def excuteCard(self, card, event, controller, gameId, params=None):
-        self.cardDict[card][0](event, controller, gameId, params)
+    def excuteCard(self, controller):
+        self.cardDict[controller.data.params["name"]][0](
+            controller.userId, controller, controller.gameId, controller.data.params)
 
-    def balanceCardExcution(self, event, controller, gameId: str, action: str, amount: int, reason: str):
-        userId = event.source.user_id
+    def balanceCardExcution(self, userId, controller, gameId: str, action: str, amount: int, reason: str):
         controller.userService.addBalance(userId, amount if action == GameLogAction.Earn else amount * -1)
         text = f"{reason}，" + ("得到" if action == GameLogAction.Earn else "失去") + f"了 ${amount}"
         gameLog = GameLog(controller.getUserName(userId), text, GameLogAction.Earn, amount)
         controller.gameService.AddGameLog(gameId, gameLog)
         text = "領取" if action == GameLogAction.Earn else "繳納"
-        controller.recordAndReply(event, ViewFactory.OperateSuccess(
-            controller.getConsoleArgument(gameId, userId), f"操作成功~\n您{text}了 ${amount}", gameLog.id))
+        controller.recordAndReply(ViewFactory.OperateSuccess(
+            controller.getConsoleArgument(), f"操作成功~\n您{text}了 ${amount}", gameLog.id))
 
 class DestinyService(BaseCardService):
     def __init__(self, db: Client):
@@ -68,33 +68,33 @@ class DestinyService(BaseCardService):
         }
         super().__init__(db, "DestinyCards", cardDict)
 
-    def shootDownFighter(self, event, controller, gameId: str, params):
-        self.balanceCardExcution(event, controller, gameId, GameLogAction.Earn, 3000, "擊落戰鬥機")
+    def shootDownFighter(self, userId, controller, gameId: str, params):
+        self.balanceCardExcution(userId, controller, gameId, GameLogAction.Earn, 3000, "擊落戰鬥機")
 
-    def payTuition(self, event, controller, gameId: str, params):
-        self.balanceCardExcution(event, controller, gameId, GameLogAction.Pay, 600, "繳學費")
+    def payTuition(self, userId, controller, gameId: str, params):
+        self.balanceCardExcution(userId, controller, gameId, GameLogAction.Pay, 600, "繳學費")
 
-    def backHome(self, event, controller, gameId: str, params):
-        self.balanceCardExcution(event, controller, gameId, GameLogAction.Earn, 2000, "回到起點")
+    def backHome(self, userId, controller, gameId: str, params):
+        self.balanceCardExcution(userId, controller, gameId, GameLogAction.Earn, 2000, "回到起點")
 
-    def speedingTicket(self, event, controller, gameId: str, params):
-        self.balanceCardExcution(event, controller, gameId, GameLogAction.Pay, params["amount"], "超速被拍")
+    def speedingTicket(self, userId, controller, gameId: str, params):
+        self.balanceCardExcution(userId, controller, gameId, GameLogAction.Pay, params["amount"], "超速被拍")
 
-    def smallBusiness(self, event, controller, gameId: str, params):
-        self.balanceCardExcution(event, controller, gameId, GameLogAction.Earn, 1000, "經營小本生意")
+    def smallBusiness(self, userId, controller, gameId: str, params):
+        self.balanceCardExcution(userId, controller, gameId, GameLogAction.Earn, 1000, "經營小本生意")
 
-    def jackpot(self, event, controller, gameId: str, params):
-        self.balanceCardExcution(event, controller, gameId, GameLogAction.Earn, 2000, "中頭彩")
+    def jackpot(self, userId, controller, gameId: str, params):
+        self.balanceCardExcution(userId, controller, gameId, GameLogAction.Earn, 2000, "中頭彩")
 
-    def allInBitcoin(self, event, controller, gameId: str, params):
-        balance = controller.userService.getBalance(event.source.user_id)
+    def allInBitcoin(self, userId, controller, gameId: str, params):
+        balance = controller.userService.getBalance(userId)
         amount = balance if params["earn"] else balance // 2
         action = GameLogAction.Earn if params["earn"] else GameLogAction.Pay
         text = "All in 比特幣" + ("大賺" if params["earn"] else "慘賠")
-        self.balanceCardExcution(event, controller, gameId, action, amount, text)
+        self.balanceCardExcution(userId, controller, gameId, action, amount, text)
 
-    def scammed(self, event, controller, gameId: str, params):
-        self.balanceCardExcution(event, controller, gameId, GameLogAction.Pay, 1200, "詐騙集團")
+    def scammed(self, userId, controller, gameId: str, params):
+        self.balanceCardExcution(userId, controller, gameId, GameLogAction.Pay, 1200, "詐騙集團")
 
 
 class ChanceService(BaseCardService):
@@ -117,8 +117,7 @@ class ChanceService(BaseCardService):
         }
         super().__init__(db, "ChanceCards", cardDict)
 
-    def stockHit(self, event, controller, gameId: str, params):
-        userId = event.source.user_id
+    def stockHit(self, userId, controller, gameId: str, params):
         resultType = GameLogAction.Pay
         if params["dice"] == 1:
             resultType = GameLogAction.Earn
@@ -141,9 +140,9 @@ class ChanceService(BaseCardService):
         controller.gameService.AddGameLog(gameId, GameLog(controller.getUserName(userId),
             f"玩股票當沖，{text}了 ${amount}", resultType, amount))
 
-        argument = controller.getConsoleArgument(gameId, userId)
+        argument = controller.getConsoleArgument()
         text = f"當沖失敗...您失去了 ${amount}" if resultType == GameLogAction.Pay else f"當沖賺錢!!您獲得了 ${amount}"
         if params["times"] == 1:
-            controller.recordAndReply(event, ViewFactory.Console(argument, text=text))
+            controller.recordAndReply(ViewFactory.Console(argument, text=text))
         else:
-            controller.recordAndReply(event, CardViewFactory.stockHit(argument, params["times"] - 1, text))
+            controller.recordAndReply(CardViewFactory.stockHit(argument, params["times"] - 1, text))

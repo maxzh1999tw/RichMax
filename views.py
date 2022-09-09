@@ -453,6 +453,8 @@ class ViewFactory:
             }
         }"""
         id = str(uuid.uuid4())
+        template = template.replace(
+            "@Console", PostbackData(PostbackType.Console, id).toFormatedJSON())
         message = json.loads(template, strict=False)
         message["header"] = ViewFactory._getGameHeader(argument)
         for playerId, playerName in players.items():
@@ -831,9 +833,6 @@ class ViewFactory:
             "@Chance", PostbackData(PostbackType.Chance, id).toFormatedJSON())
         template = template.replace(
             "@Destiny", PostbackData(PostbackType.Destiny, id).toFormatedJSON())
-
-        template = template.replace(
-            "@UserInfo", PostbackData(PostbackType.UserInfo, id).toFormatedJSON())
         message = json.loads(template, strict=False)
         message["contents"][0]["header"] = ViewFactory._getGameHeader(
             argument, id)

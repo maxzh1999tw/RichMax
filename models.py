@@ -22,7 +22,6 @@ class PostbackType:
     CreateGame = "CreateGame"
     LeaveConfirm = "LeaveConfirm"
     Leave = "Leave"
-    UserInfo = "UserInfo"
     Earn = "Earn"
     Pay = "Pay"
     Transfer = "Transfer"
@@ -72,3 +71,6 @@ class UserContextType:
     Earn = "Earn"
     Pay = "Pay"
     TransferAmount = "TransferAmount"
+
+class InputError(Exception):
+    pass

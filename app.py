@@ -18,6 +18,7 @@ class LineBotApp:
     def serve(self, request):
         events = self.getEvents(request)
         try:
+            # 一個 Request 啟用一條 DB 連線
             db = firestore.Client()
             self.db = db
             for event in events:
@@ -26,8 +27,10 @@ class LineBotApp:
             db.close()
 
     def handleEvent(self, event):
+        # 一個事件使用一個 Controller
         if isinstance(event, FollowEvent) or isinstance(event, UnfollowEvent):
             FollowController(self.lineBotApi, self.db).handleEvent(event)
+            return
 
         gameService = GameService(self.db)
         gameId = gameService.getUserGameId(event.source.user_id)
@@ -35,5 +38,5 @@ class LineBotApp:
             DefaultController(self.lineBotApi, self.db,
                               gameService=gameService).handleEvent(event)
         else:
-            GameController(self.lineBotApi, self.db,
-                           gameService=gameService).handleEvent(event, gameId)
+            GameController(self.lineBotApi, self.db, gameId,
+                           gameService=gameService).handleEvent(event)

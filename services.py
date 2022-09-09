@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from heapq import merge
 import random
 from google.cloud import firestore
 from google.cloud.firestore import Client
@@ -92,23 +93,23 @@ class GameService:
             "GameLogs": logs
         })
 
-    def getMemberIds(self, gameId: str, excludeId: str):
+    def getOtherMembers(self, gameId: str, excludeId: str):
         memberIds = self._collection.document(gameId).get().get("Members")
         memberIds.remove(excludeId)
         return memberIds
 
 
 class UserService:
-    _initBalance = 15000
+    initBalance = 15000
 
     def __init__(self, db: Client):
         self._db = db
         self._collection = self._db.collection("User")
 
     def setLastMessageId(self, userId: str, messageId: str):
-        self._collection.document(userId).update({
+        self._collection.document(userId).set({
             "LastMessageId": messageId
-        })
+        }, merge=True)
 
     def isLastMessage(self, userId: str, messageId: str):
         doc = self._collection.document(userId)
@@ -123,9 +124,9 @@ class UserService:
 
     def initGameData(self, userId: str):
         self._collection.document(userId).set({
-            "Balance": UserService._initBalance,
+            "Balance": UserService.initBalance,
             "Context": None,
-        })
+        }, merge=True)
 
     def getBalance(self, userId):
         return self._collection.document(userId).get().get("Balance")
@@ -134,11 +135,15 @@ class UserService:
         return UserContext.parse(self._collection.document(userId).get().get("Context"))
 
     def setContext(self, userId: str, context: UserContext):
-        self._collection.document(userId).update({
-            "Context": dict(context) if context != None else None
-        })
+        doc = self._collection.document(userId)
+        if doc.get().exists:
+            self._collection.document(userId).update({
+                "Context": dict(context) if context != None else None
+            })
 
     def addBalance(self, userId: str, amount: int):
-        self._collection.document(userId).update({
-            "Balance": firestore.Increment(amount)
-        })
+        doc = self._collection.document(userId)
+        if doc.get().exists:
+            doc.update({
+                "Balance": firestore.Increment(amount)
+            })
