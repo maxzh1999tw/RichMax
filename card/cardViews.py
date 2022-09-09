@@ -8,63 +8,35 @@ from views import *
 
 class CardViewFactory(ViewFactory):
     def shootDownFighter(argument: ConsoleArgument):
-        message = CardViewFactory._cardTemplate(
-            argument,
-            "https://thumbs.dreamstime.com/b/bomber-plane-drops-bomb-sketch-engraving-vector-illustration-scratch-board-style-imitation-hand-drawn-image-bomber-plane-drops-159425073.jpg",
-            "命運",
-            "擊落戰鬥機",
-            "擊落戰鬥機，得 $3000")
-
-        footer = '''{
-            "type": "box",
-            "layout": "horizontal",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "領取獎勵",
-                        "data": "@data"
-                    }
-                }
-            ]
-        }'''
-
         id = str(uuid.uuid4())
-        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
-                                                      id, {"name": "擊落戰鬥機"}).toFormatedJSON())
-        message["footer"] = json.loads(footer, strict=False)
+
+        message = CardViewFactory._cardTemplate(
+            argument, "https://thumbs.dreamstime.com/b/bomber-plane-drops-bomb-sketch-engraving-vector-illustration-scratch-board-style-imitation-hand-drawn-image-bomber-plane-drops-159425073.jpg",
+            "命運", "擊落戰鬥機", "擊落戰鬥機，得 $3000", id)
+
+        message["footer"]["contents"].insert(0, ButtonComponent(
+            style="primary",
+            action=PostbackAction(
+                label="領取獎勵",
+                data=PostbackData(PostbackType.Destiny, id, {"name": "擊落戰鬥機"}).toFormatedJSON()
+            )
+        ))
         return View(id, FlexSendMessage(alt_text="[命運] 擊落戰鬥機", contents=message))
 
     def payTuition(argument: ConsoleArgument):
-        message = CardViewFactory._cardTemplate(
-            argument,
-            "https://pic.pimg.tw/stock2012/1407218694-550000070.jpg",
-            "命運",
-            "繳學費",
-            "繳學費，失去 $600")
-
-        footer = '''{
-            "type": "box",
-            "layout": "horizontal",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "繳交款項",
-                        "data": "@data"
-                    }
-                }
-            ]
-        }'''
-
         id = str(uuid.uuid4())
-        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
-                                                      id, {"name": "繳學費"}).toFormatedJSON())
-        message["footer"] = json.loads(footer, strict=False)
+
+        message = CardViewFactory._cardTemplate(
+            argument, "https://pic.pimg.tw/stock2012/1407218694-550000070.jpg",
+            "命運", "繳學費", "繳學費，失去 $600", id)
+
+        message["footer"]["contents"].insert(0, ButtonComponent(
+            style="primary",
+            action=PostbackAction(
+                label="繳交款項",
+                data=PostbackData(PostbackType.Destiny, id, {"name": "繳學費"}).toFormatedJSON()
+            )
+        ))
         return View(id, FlexSendMessage(alt_text="[命運] 繳學費", contents=message))
 
     def capturedByAliens(argument: ConsoleArgument):
@@ -88,33 +60,19 @@ class CardViewFactory(ViewFactory):
         return View("", FlexSendMessage(alt_text="[命運] 牢底坐穿", contents=message))
 
     def backHome(argument: ConsoleArgument):
-        message = CardViewFactory._cardTemplate(
-            argument,
-            "https://thumbs.dreamstime.com/b/modern-house-vector-illustrations-cartoon-flat-home-apartment-facade-exterior-residential-building-set-icons-isolated-modern-180988199.jpg",
-            "命運",
-            "家人的呼喚",
-            "回到起點並獲得 $2000")
-
-        footer = '''{
-            "type": "box",
-            "layout": "horizontal",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "領取獎勵",
-                        "data": "@data"
-                    }
-                }
-            ]
-        }'''
-
         id = str(uuid.uuid4())
-        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
-                                                      id, {"name": "家人的呼喚"}).toFormatedJSON())
-        message["footer"] = json.loads(footer, strict=False)
+
+        message = CardViewFactory._cardTemplate(
+            argument, "https://thumbs.dreamstime.com/b/modern-house-vector-illustrations-cartoon-flat-home-apartment-facade-exterior-residential-building-set-icons-isolated-modern-180988199.jpg",
+            "命運", "家人的呼喚", "回到起點並獲得 $2000", id)
+
+        message["footer"]["contents"].insert(0, ButtonComponent(
+            style="primary",
+            action=PostbackAction(
+                label="領取獎勵",
+                data=PostbackData(PostbackType.Destiny, id, {"name": "家人的呼喚"}).toFormatedJSON()
+            )
+        ))
         return View(id, FlexSendMessage(alt_text="[命運] 家人的呼喚", contents=message))
 
     def buildMyLand(argument: ConsoleArgument):
@@ -138,163 +96,87 @@ class CardViewFactory(ViewFactory):
         return View("", FlexSendMessage(alt_text="[命運] 生日快樂", contents=message))
 
     def speedingTicket(argument: ConsoleArgument):
+        id = str(uuid.uuid4())
+
         amount = random.randint(6, 14) * 100
         message = CardViewFactory._cardTemplate(
-            argument,
-            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd3KKrEYy3NkE3xlyqSKbYIJ62IUxbEaMM8q7vYd_Vvyvgzg0LTuHsOLmd--EQCL4eS1w&usqp=CAU",
-            "命運",
-            "超速罰單",
-            f"超速被拍，罰款 ${amount}")
+            argument, "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSd3KKrEYy3NkE3xlyqSKbYIJ62IUxbEaMM8q7vYd_Vvyvgzg0LTuHsOLmd--EQCL4eS1w&usqp=CAU",
+            "命運", "超速罰單", f"超速被拍，罰款 ${amount}", id)
 
-        footer = '''{
-            "type": "box",
-            "layout": "horizontal",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "繳交罰金",
-                        "data": "@data"
-                    }
-                }
-            ]
-        }'''
-
-        id = str(uuid.uuid4())
-        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
-                                                      id, {"name": "超速罰單", "amount": amount}).toFormatedJSON())
-        message["footer"] = json.loads(footer, strict=False)
-
+        message["footer"]["contents"].insert(0, ButtonComponent(
+            style="primary",
+            action=PostbackAction(
+                label="繳交罰金",
+                data=PostbackData(PostbackType.Destiny, id, {"name": "超速罰單", "amount": amount}).toFormatedJSON()
+            )
+        ))
         return View(id, FlexSendMessage(alt_text="[命運] 超速罰單", contents=message))
 
     def smallBusiness(argument: ConsoleArgument):
-        message = CardViewFactory._cardTemplate(
-            argument,
-            "https://media.istockphoto.com/vectors/food-market-thailand-vector-id960450496?k=20&m=960450496&s=612x612&w=0&h=YcnmVnzukODKNR5JuHqkfR1TXLvhed2z72guZK06JxQ=",
-            "命運",
-            "小本生意",
-            "小本生意，得 $1000")
-
-        footer = '''{
-            "type": "box",
-            "layout": "horizontal",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "領取獎勵",
-                        "data": "@data"
-                    }
-                }
-            ]
-        }'''
-
         id = str(uuid.uuid4())
-        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
-                                                      id, {"name": "小本生意"}).toFormatedJSON())
-        message["footer"] = json.loads(footer, strict=False)
 
+        message = CardViewFactory._cardTemplate(
+            argument, "https://media.istockphoto.com/vectors/food-market-thailand-vector-id960450496?k=20&m=960450496&s=612x612&w=0&h=YcnmVnzukODKNR5JuHqkfR1TXLvhed2z72guZK06JxQ=",
+            "命運", "小本生意", "小本生意，得 $1000", id)
+
+        message["footer"]["contents"].insert(0, ButtonComponent(
+            style="primary",
+            action=PostbackAction(
+                label="領取獎勵",
+                data=PostbackData(PostbackType.Destiny, id, {"name": "小本生意"}).toFormatedJSON()
+            )
+        ))
         return View(id, FlexSendMessage(alt_text="[命運] 小本生意", contents=message))
 
     def jackpot(argument: ConsoleArgument):
-        message = CardViewFactory._cardTemplate(
-            argument,
-            "https://images2.gamme.com.tw/news2/2022/48/30/qJeVoKWckaCXrKQ.jpg",
-            "命運",
-            "中頭彩",
-            "中頭彩，得 $2000")
-
-        footer = '''{
-            "type": "box",
-            "layout": "horizontal",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "領取獎勵",
-                        "data": "@data"
-                    }
-                }
-            ]
-        }'''
-
         id = str(uuid.uuid4())
-        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
-                                                      id, {"name": "中頭彩"}).toFormatedJSON())
-        message["footer"] = json.loads(footer, strict=False)
 
+        message = CardViewFactory._cardTemplate(
+            argument, "https://images2.gamme.com.tw/news2/2022/48/30/qJeVoKWckaCXrKQ.jpg",
+            "命運", "中頭彩", "中頭彩，得 $2000", id)
+
+        message["footer"]["contents"].insert(0, ButtonComponent(
+            style="primary",
+            action=PostbackAction(
+                label="領取獎勵",
+                data=PostbackData(PostbackType.Destiny, id, {"name": "中頭彩"}).toFormatedJSON()
+            )
+        ))
         return View(id, FlexSendMessage(alt_text="[命運] 中頭彩", contents=message))
 
     def allInBitcoin(argument: ConsoleArgument):
+        id = str(uuid.uuid4())
+
         earn = True if random.randint(0, 1) == 1 else False
         text = "大賺，財產翻倍" if earn else "慘賠，財產減半"
         message = CardViewFactory._cardTemplate(
-            argument,
-            "https://www.moneydj.com/z/sjn/png/GetNewsRptpng.djpng?a=226524",
-            "命運",
-            "All in 比特幣",
-            f"All in 比特幣{text}")
+            argument, "https://www.moneydj.com/z/sjn/png/GetNewsRptpng.djpng?a=226524",
+            "命運", "All in 比特幣", f"All in 比特幣{text}", id)
         
         buttonText = "領取獎勵" if earn else "繳交款項"
-        
-        footer = '''{
-            "type": "box",
-            "layout": "horizontal",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "'''+buttonText+'''",
-                        "data": "@data"
-                    }
-                }
-            ]
-        }'''
-
-        id = str(uuid.uuid4())
-        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
-                                                      id, {"name": "All in 比特幣", "earn": earn}).toFormatedJSON())
-        message["footer"] = json.loads(footer, strict=False)
-
+        message["footer"]["contents"].insert(0, ButtonComponent(
+            style="primary",
+            action=PostbackAction(
+                label=buttonText,
+                data=PostbackData(PostbackType.Destiny, id, {"name": "All in 比特幣", "earn": earn}).toFormatedJSON()
+            )
+        ))
         return View(id, FlexSendMessage(alt_text="[命運] All in 比特幣", contents=message))
 
     def scammed(argument: ConsoleArgument):
-        message = CardViewFactory._cardTemplate(
-            argument,
-            "https://upload.shejihz.com/2020/01/3e40dcf489017f2a8645cbc7eb70fb6f.jpg",
-            "命運",
-            "詐騙集團",
-            "被詐騙，損失 $1200")
-
-        footer = '''{
-            "type": "box",
-            "layout": "horizontal",
-            "contents": [
-                {
-                    "type": "button",
-                    "style": "primary",
-                    "action": {
-                        "type": "postback",
-                        "label": "繳交款項",
-                        "data": "@data"
-                    }
-                }
-            ]
-        }'''
-
         id = str(uuid.uuid4())
-        footer = footer.replace("@data", PostbackData(PostbackType.Destiny,
-                                                      id, {"name": "詐騙集團"}).toFormatedJSON())
-        message["footer"] = json.loads(footer, strict=False)
 
+        message = CardViewFactory._cardTemplate(
+            argument, "https://upload.shejihz.com/2020/01/3e40dcf489017f2a8645cbc7eb70fb6f.jpg",
+            "命運", "詐騙集團", "被詐騙，損失 $1200", id)
+
+        message["footer"]["contents"].insert(0, ButtonComponent(
+            style="primary",
+            action=PostbackAction(
+                label="繳交款項",
+                data=PostbackData(PostbackType.Destiny, id, {"name": "詐騙集團"}).toFormatedJSON()
+            )
+        ))
         return View(id, FlexSendMessage(alt_text="[命運] 詐騙集團", contents=message))
 
     def stockHit(argument: ConsoleArgument, times: int, text=""):
@@ -611,10 +493,28 @@ class CardViewFactory(ViewFactory):
                     "spacing": "md"
                 }
                 ]
+            },
+            "footer": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                {
+                    "type": "button",
+                    "action": {
+                    "type": "postback",
+                    "label": "操控面板",
+                    "data": "@Console"
+                    },
+                    "style": "secondary"
+                }
+                ],
+                "spacing": "md"
             }
             }'''
         id = str(uuid.uuid4())
         template = template.replace("@times", str(times))
+        template = template.replace(
+            "@Console", PostbackData(PostbackType.Console, id).toFormatedJSON())
         for i in range(1, 7):
             template = template.replace(f"@data{i}", PostbackData(PostbackType.Chance,
                                                                   id, {"name": "股票當沖", "dice": i, "times": times}).toFormatedJSON())
@@ -756,7 +656,7 @@ class CardViewFactory(ViewFactory):
 
         return View("", FlexSendMessage(alt_text="[沒有機會] 不給機會", contents=message))
 
-    def _cardTemplate(argument: ConsoleArgument, imgUrl: str, typeName: str, title: str, content: str):
+    def _cardTemplate(argument: ConsoleArgument, imgUrl: str, typeName: str, title: str, content: str, id=""):
         template = '''{
             "type": "bubble",
             "hero": {
@@ -826,12 +726,30 @@ class CardViewFactory(ViewFactory):
                         ]
                     }
                 ]
+            },
+            "footer": {
+                "type": "box",
+                "layout": "vertical",
+                "contents": [
+                {
+                    "type": "button",
+                    "action": {
+                    "type": "postback",
+                    "label": "操控面板",
+                    "data": "@Console"
+                    },
+                    "style": "secondary"
+                }
+                ],
+                "spacing": "md"
             }
         }'''
         template = template.replace("@ImgUrl", imgUrl)
         template = template.replace("@TypeName", typeName)
         template = template.replace("@Title", title)
         template = template.replace("@Content", content)
+        template = template.replace(
+            "@Console", PostbackData(PostbackType.Console, id).toFormatedJSON())
         message = json.loads(template, strict=False)
         message["header"] = ViewFactory._getGameHeader(argument)
         return message

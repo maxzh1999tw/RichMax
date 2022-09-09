@@ -274,16 +274,30 @@ class ViewFactory:
                         "type": "button",
                         "action": {
                             "type": "postback",
+                            "label": "取消",
+                            "data": "@Console"
+                        },
+                        "style": "secondary"
+                    },
+                    {
+                        "type": "button",
+                        "action": {
+                            "type": "postback",
                             "label": "確定",
                             "data": "@Leave"
-                        }
+                        },
+                        "style": "primary",
+                        "color": "#a15e57"
                     }
-                ]
+                ],
+                "spacing": "md"
             }
         }"""
         id = str(uuid.uuid4())
         template = template.replace(
             "@Leave", PostbackData(PostbackType.Leave, id).toFormatedJSON())
+        template = template.replace(
+            "@Console", PostbackData(PostbackType.Console, id).toFormatedJSON())
         message = json.loads(template, strict=False)
         message["header"] = ViewFactory._getGameHeader(argument, id, True)
         return View(id, FlexSendMessage(alt_text="您確定要退出嗎?", contents=message))
@@ -800,78 +814,6 @@ class ViewFactory:
                         }
                         ],
                         "spacing": "md"
-                    },
-                    {
-                        "type": "box",
-                        "layout": "horizontal",
-                        "contents": [
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                            {
-                                "type": "image",
-                                "url": "https://cdn-icons-png.flaticon.com/512/3024/3024605.png",
-                                "size": "25px",
-                                "align": "start",
-                                "action": {
-                                "type": "postback",
-                                "label": "action",
-                                "data": "@UserInfo"
-                                },
-                                "flex": 1
-                            },
-                            {
-                                "type": "text",
-                                "text": "我的財產",
-                                "flex": 3,
-                                "weight": "bold",
-                                "size": "xs"
-                            }
-                            ],
-                            "alignItems": "center",
-                            "action": {
-                            "type": "postback",
-                            "data": "@UserInfo"
-                            }
-                        },
-                        {
-                            "type": "box",
-                            "layout": "horizontal",
-                            "contents": [
-                            {
-                                "type": "image",
-                                "url": "https://cdn-icons-png.flaticon.com/512/3606/3606497.png",
-                                "size": "25px",
-                                "align": "end",
-                                "action": {
-                                "type": "postback",
-                                "label": "action",
-                                "data": "@UserInfo"
-                                },
-                                "flex": 3
-                            },
-                            {
-                                "type": "text",
-                                "text": "購地",
-                                "flex": 1,
-                                "weight": "bold",
-                                "size": "xs",
-                                "align": "end"
-                            }
-                            ],
-                            "alignItems": "center",
-                            "action": {
-                            "type": "postback",
-                            "data": "@BuyLand"
-                            }
-                        }
-                        ],
-                        "alignItems": "flex-end",
-                        "margin": "xl",
-                        "paddingStart": "md",
-                        "paddingEnd": "md",
-                        "paddingBottom": "xs"
                     }
                     ],
                     "spacing": "md"
