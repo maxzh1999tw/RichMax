@@ -557,120 +557,93 @@ class ViewFactory:
 
     def _getGameHeader(argument: ConsoleArgument, id="", hideLeave=False):
         template = """{
+    "type": "box",
+    "layout": "horizontal",
+    "contents": [
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
             "type": "box",
-            "layout": "horizontal",
+            "layout": "vertical",
             "contents": [
-            {
-                "type": "box",
-                "layout": "vertical",
-                "contents": [
-                {
-                    "type": "box",
-                    "layout": "horizontal",
-                    "contents": [
-                    {
-                        "type": "box",
-                        "layout": "vertical",
-                        "contents": [
-                        {
-                            "type": "text",
-                            "text": "@gameId",
-                            "size": "md",
-                            "align": "center",
-                            "gravity": "center",
-                            "weight": "bold",
-                            "color": "#103252"
-                        }
-                        ],
-                        "margin": "xl",
-                        "backgroundColor": "#c0d9f0",
-                        "maxWidth": "50px"
-                    },
-                    {
-                        "type": "text",
-                        "text": "@username",
-                        "weight": "bold",
-                        "color": "#396996",
-                        "margin": "md",
-                        "align": "center",
-                        "offsetEnd": "md"
-                    }
-                    ]
-                },
-                {
-                    "type": "box",
-                    "layout": "horizontal",
-                    "contents": [
-                    {
-                        "type": "box",
-                        "layout": "vertical",
-                        "contents": [
-                        {
-                            "type": "text",
-                            "text": "餘額：",
-                            "size": "md",
-                            "align": "center",
-                            "gravity": "center",
-                            "offsetTop": "1px",
-                            "color": "#5e8c5a",
-                            "weight": "bold",
-                            "offsetStart": "sm"
-                        }
-                        ],
-                        "margin": "xl",
-                        "maxWidth": "50px"
-                    },
-                    {
-                        "type": "text",
-                        "text": "@balance",
-                        "margin": "md",
-                        "weight": "bold",
-                        "color": "#5e8c5a",
-                        "align": "center",
-                        "offsetEnd": "md"
-                    }
-                    ],
-                    "margin": "sm"
-                }
-                ],
-                "alignItems": "center",
-                "flex": 9,
-                "offsetEnd": "15px"
-            },
-            {
-                "type": "filler"
-            },
-            {
-                "type": "box",
-                "layout": "vertical",
-                "contents": [
-                {
-                    "type": "image",
-                    "url": "https://cdn-icons-png.flaticon.com/512/402/402718.png",
-                    "size": "25px"
-                },
-                {
-                    "type": "text",
-                    "text": "退出",
-                    "align": "center",
-                    "size": "xxs",
-                    "weight": "bold"
-                }
-                ],
-                "spacing": "sm",
-                "cornerRadius": "xl",
-                "action": {
-                "type": "postback",
-                "data": "@LeaveConfirm"
-                },
-                "position": "absolute",
-                "paddingAll": "20px",
-                "paddingTop": "23px"
-            }
+              {
+                "type": "text",
+                "text": "@gameId",
+                "size": "md",
+                "align": "center",
+                "gravity": "center",
+                "weight": "bold",
+                "color": "#103252"
+              }
             ],
-            "alignItems": "center",
-            "justifyContent": "flex-end"
-        }"""
+            "backgroundColor": "#c0d9f0",
+            "paddingStart": "4px",
+            "paddingEnd": "3px"
+          },
+          {
+            "type": "text",
+            "text": "餘額：",
+            "size": "md",
+            "align": "center",
+            "gravity": "center",
+            "offsetTop": "1px",
+            "color": "#5e8c5a",
+            "weight": "bold",
+            "offsetStart": "sm"
+          }
+        ],
+        "flex": 1,
+        "alignItems": "center"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "text",
+            "text": "@username",
+            "weight": "bold",
+            "color": "#396996"
+          },
+          {
+            "type": "text",
+            "text": "@balance",
+            "weight": "bold",
+            "color": "#5e8c5a"
+          }
+        ],
+        "flex": 3,
+        "alignItems": "center"
+      },
+      {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {
+            "type": "image",
+            "url": "https://cdn-icons-png.flaticon.com/512/402/402718.png",
+            "size": "25px"
+          },
+          {
+            "type": "text",
+            "text": "退出",
+            "align": "center",
+            "size": "xxs",
+            "weight": "bold"
+          }
+        ],
+        "action": {
+          "type": "postback",
+          "data": "@LeaveConfirm"
+        },
+        "flex": 1,
+        "alignItems": "flex-end",
+        "paddingTop": "2px"
+      }
+    ]
+  }"""
         template = template.replace("@gameId", argument.gameId)
         template = template.replace("@username", argument.username)
         template = template.replace(
